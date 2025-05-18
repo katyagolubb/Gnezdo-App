@@ -64,9 +64,24 @@ class UserBookCreateSerializer(serializers.ModelSerializer):
     def validate_location(self, value):
         if not value or not isinstance(value, str):
             raise serializers.ValidationError("Location is required and must be a string")
+        if value:
+            try:
+                lat, lon = map(float, value.split(','))
+                if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+                    raise ValueError
+                return value
+            except (ValueError, AttributeError):
+                raise serializers.ValidationError("Location must be 'lat,lon' (e.g., '55.7558,37.6173')")
         return value
 
     def create(self, validated_data):
         user = validated_data.pop('user')
         book_id = validated_data.pop('book_id')
         return UserBook.objects.create(user=user, book_id=book_id, **validated_data)
+
+class UserBookSerializer(serializers.ModelSerializer):
+    book = BookCreateSerializer(source='book_id', read_only=True)
+
+    class Meta:
+        model = UserBook
+        fields = ['user_book_id', 'book', 'condition', 'location']

@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.core.cache import cache
 from django.conf import settings
-from books.serializers import BookSuggestionSerializer, BookCreateSerializer, UserBookCreateSerializer
+from books.serializers import BookSuggestionSerializer, BookCreateSerializer, UserBookCreateSerializer, UserBookSerializer
 from books.models import Book, UserBook
 
 class BookSuggestionView(APIView):
@@ -110,3 +110,59 @@ class BookCreateView(APIView):
             user_book_serializer.save()
             return Response({"message": "Book added successfully", "book_id": book.book_id}, status=status.HTTP_201_CREATED)
         return Response(user_book_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserBookListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.is_superuser:
+            user_books = UserBook.objects.all()  # Суперпользователь видит все записи
+        else:
+            user_books = UserBook.objects.filter(user=user)  # Обычный пользователь видит только свои записи
+        serializer = UserBookSerializer(user_books, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class UserBookDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, user_book_id, user):
+        try:
+            user_book = UserBook.objects.get(user_book_id=user_book_id)
+            if not user.is_superuser and user_book.user != user:
+                return None  # Ограничение доступа для обычных пользователей
+            return user_book
+        except UserBook.DoesNotExist:
+            return None
+
+    def get(self, request, user_book_id):
+        user_book = self.get_object(user_book_id, request.user)
+        if not user_book:
+            return Response({"error": "Book not found or access denied"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = UserBookSerializer(user_book)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, user_book_id):
+        user_book = self.get_object(user_book_id, request.user)
+        if not user_book:
+            return Response({"error": "Book not found or access denied"}, status=status.HTTP_404_NOT_FOUND)
+
+        data = request.data
+        user_book_data = {
+            'condition': data.get('condition', user_book.condition),
+            'location': data.get('location', user_book.location),
+            'user': user_book.user.id,
+            'book_id': user_book.book_id.book_id,
+        }
+        serializer = UserBookCreateSerializer(user_book, data=user_book_data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Book updated successfully"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, user_book_id):
+        user_book = self.get_object(user_book_id, request.user)
+        if not user_book:
+            return Response({"error": "Book not found or access denied"}, status=status.HTTP_404_NOT_FOUND)
+        user_book.delete()
+        return Response({"message": "Book deleted successfully"}, status=status.HTTP_204_NO_CONTENT)

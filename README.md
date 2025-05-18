@@ -50,79 +50,130 @@ This project is a RESTful API built with Django and Django REST Framework (DRF) 
     ```
 
 ## API Endpoints
-1. Obtain Authentication Token (**_User_**)
+1. **Obtain Authentication Token (**_User_**)**
    - URL: POST /api/token/
    - Body:
-    ```
-    {
-        "username": "root",
-        "password": "yourpassword"
-    }
-    ```
+      ```
+      {
+          "username": "root",
+          "password": "yourpassword"
+      }
+      ```
    - Response:
-    ```
-    {
-        "access": "your_access_token",
-        "refresh": "your_refresh_token"
-    }
-    ```
+      ```
+      {
+          "access": "your_access_token",
+          "refresh": "your_refresh_token"
+      }
+      ```
 
-2. Search for Books (Suggestions)
-
-   - URL: _GET /api/books/suggestions/?query=<search_term>_
-   - Headers: Authorization: Bearer your_access_token
-   - Example:GET /api/books/suggestions/?query=Harry%20Potter
+2. **Search for Books (Suggestions)**
+   - URL: GET /api/books/suggestions/?query=<search_term>
+   - Example: GET /api/books/suggestions/?query=Harry%20Potter
    - Response:
-    ```
-    [
-        {
-            "id": "book_id",
-            "name": "Harry Potter and the Philosopher's Stone",
-            "author": "J.K. Rowling",
-            "overview": "A young wizard's journey...",
-            "genres": "Fantasy, Adventure"
-        },
-        ...
-    ]
-    ```
-
-3. Add a Book (via Google Books API)
-   - URL: _POST /api/books/_
-   - Headers: Authorization: Bearer your_access_token
-   - Body:
-    ```
-        {
-            "book_id": "iO5pApw2JycC",
-            "condition": "OK",
-            "location": "55.7558,37.6173"
-        }
-    ```
-   - Response:
-    ```
-   {
-        "message": "Book added successfully",
-        "book_id": 1
-    }
-    ```
-
-4. Add a Custom Book
-   - URL: POST /api/books/
-   - Headers: Authorization: Bearer your_access_token
-   - Body:
-    ```
-    {
-        "name": "My Custom Book",
-        "author": "John Doe",
-        "overview": "This is a custom book description.",
-        "genres": "Fiction, Adventure",
-        "condition": "OK",
-        "location": "55.7558,37.6173"
-    }
-    ```
-   - Response:
-    ```
-    {
-        "message": "Book added successfully",
-        "book_id": 2
-    }
-    ```
+     ```json
+     [
+         {
+             "id": "book_id",
+             "name": "Harry Potter and the Philosopher's Stone",
+             "author": "J.K. Rowling",
+             "overview": "A young wizard's journey...",
+             "genres": "Fantasy, Adventure"
+         },
+         ...
+     ]
+     ```
+3. **CRUD Operations for Books**
+- **Create a Book**
+  - URL: POST /api/books/
+  - Methods: Supports adding via Google Books API or manually.
+  - Body (Google Books API):
+     ```json
+     {
+         "book_id": "iO5pApw2JycC",
+         "condition": "OK",
+         "location": "55.7558,37.6173"
+     }
+     ```
+  - Body (Custom Book):
+     ```json
+     {
+         "name": "My Custom Book",
+         "author": "John Doe",
+         "overview": "This is a custom book description.",
+         "genres": "Fiction, Adventure",
+         "condition": "OK",
+         "location": "55.7558,37.6173"
+     }
+     ```
+  - Response:
+     ```json
+     {
+         "message": "Book added successfully",
+         "book_id": <user_book_id>
+     }
+     ```
+- **Read (List User's Books)**
+  - URL: GET /api/books/list/
+  - Description: Returns a list of books for the authenticated user (all books for superusers).
+  - Response:
+     ```json
+     [
+         {
+             "user_book_id": 1,
+             "book": {
+                 "book_id": 1,
+                 "name": "My Custom Book",
+                 "author": "John Doe",
+                 "overview": "This is a custom book description.",
+                 "genres": "Fiction, Adventure"
+             },
+             "condition": "OK",
+             "location": "55.7558,37.6173"
+         },
+         ...
+     ]
+     ```
+- **Read (Retrieve Book Details)**
+  - URL: GET /api/books/<user_book_id>/
+  - Description: Returns details of a specific book record.
+  - Response:
+     ```json
+     {
+         "user_book_id": 1,
+         "book": {
+             "book_id": 1,
+             "name": "My Custom Book",
+             "author": "John Doe",
+             "overview": "This is a custom book description.",
+             "genres": "Fiction, Adventure"
+         },
+         "condition": "OK",
+         "location": "55.7558,37.6173"
+     }
+     ```
+- **Update a Book**
+  - URL: PUT /api/books/<user_book_id>/
+  - Description: Updates condition and/or location for the user's book (all books for superusers).
+  - Body:
+     ```json
+     {
+         "condition": "Excellent",
+         "location": "40.7128,-74.0060"
+     }
+     ```
+  - Response:
+     ```json
+     {
+         "message": "Book updated successfully"
+     }
+     ```
+- **Delete a Book**
+  - URL: DELETE /api/books/<user_book_id>/
+  - Description: Deletes the user's book record (all books for superusers).
+  - Response:
+     ```json
+     {
+         "message": "Book deleted successfully"
+     }
+     ```
