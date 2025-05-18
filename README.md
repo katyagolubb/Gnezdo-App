@@ -6,6 +6,7 @@ This project is a RESTful API built with Django and Django REST Framework (DRF) 
 - Python 3.8+
 - PostgreSQL (or another supported database)
 - A Google Books API key
+- Docker (for Redis caching)
 
 ## Installation
 
@@ -32,19 +33,34 @@ This project is a RESTful API built with Django and Django REST Framework (DRF) 
     GOOGLE_API_KEY=your_google_api_key
     DATABASE_URL=postgres://user:password@localhost:5432/dbname
     ```
-   
-5. Run Migrations:
+5. Set Up Redis with Docker:
+   - Ensure Docker is installed (Docker Desktop).
+   - Run Redis container:
+       ```bash
+       docker run -d -p 6379:6379 --name redis-container redis
+       ```
+   - Verify Redis is running:
+       ```bash
+       docker ps
+       ```
+    or connect and test:
+    ```bash
+    docker exec -it redis-container redis-cli ping
+    ```
+    (Should return PONG).
+
+6. Run Migrations:
     ```
     python manage.py makemigrations
     python manage.py migrate
     ```
 
-6. Create a Superuser:
+7. Create a Superuser:
     ```
     python manage.py createsuperuser
     ```
 
-7. Run the Development Server:
+8. Run the Development Server:
     ```
     python manage.py runserver
     ```
