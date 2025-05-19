@@ -125,10 +125,11 @@ class UserBookListView(generics.ListAPIView):
         if user_id:
             try:
                 target_user = User.objects.get(id=user_id)
-                return UserBook.objects.filter(user=target_user)
+                return UserBook.objects.filter(user=target_user).select_related('book_id')
             except User.DoesNotExist:
-                return UserBook.objects.none()  # Возвращаем пустой queryset
-        return UserBook.objects.filter(user=self.request.user)
+                return UserBook.objects.none()
+        return UserBook.objects.filter(user=self.request.user).select_related('book_id')
+
 class UserBookDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -180,18 +181,29 @@ class BookSearchView(generics.ListAPIView):
     def get_queryset(self):
         query = self.request.query_params.get('query', '')
         genres = self.request.query_params.get('genres', '')
+        author = self.request.query_params.get('author', '')
 
-        if not query:
-            return UserBook.objects.none()  # Пустой queryset, если нет query
+        # Начинаем с базового набора книг
+        books = Book.objects.all()
 
-        books = Book.objects.filter(name__icontains=query)
-        if not books.exists():
-            return UserBook.objects.none()
+        # Фильтрация по названию, если указано
+        if query:
+            books = books.filter(name__icontains=query)
 
+        # Фильтрация по жанрам, если указано
         if genres:
             genre_list = [genre.strip() for genre in genres.split(',')]
             books = books.filter(genres__icontains=genre_list[0])
             for genre in genre_list[1:]:
                 books = books.filter(genres__icontains=genre)
 
-        return UserBook.objects.filter(book_id__in=books)
+        # Фильтрация по автору, если указано
+        if author:
+            books = books.filter(author__icontains=author)
+
+        # Если после фильтрации книг нет, возвращаем пустой queryset
+        if not books.exists():
+            return UserBook.objects.none()
+
+        # Возвращаем записи UserBook, связанные с отфильтрованными книгами
+        return UserBook.objects.filter(book_id__in=books).select_related('book_id').prefetch_related('photo_set')
