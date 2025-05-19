@@ -131,24 +131,30 @@ This project is a RESTful API built with Django and Django REST Framework (DRF) 
      ```
 - **Read (List User's Books)**
   - URL: GET /api/books/list/
-  - Description: Returns a list of books for the authenticated user (all books for superusers).
+  - Description: Returns a list of books. By default, lists the authenticated user's books. Use ?user_id=<id> to list books of another user. 
+  - Example: GET /api/books/list/?user_id=2&page=1
   - Response:
      ```json
-     [
-         {
-             "user_book_id": 1,
-             "book": {
-                 "book_id": 1,
-                 "name": "My Custom Book",
-                 "author": "John Doe",
-                 "overview": "This is a custom book description.",
-                 "genres": "Fiction, Adventure"
-             },
-             "condition": "OK",
-             "location": "55.7558,37.6173"
-         },
-         ...
-     ]
+     {
+    "count": 50,
+    "next": "http://localhost:8000/api/books/list/?page=2",
+    "previous": null,
+    "results": [
+        {
+            "user_book_id": 1,
+            "book": {
+                "book_id": 1,
+                "name": "My Custom Book",
+                "author": "John Doe",
+                "overview": "This is a custom book description.",
+                "genres": "Fiction, Adventure"
+            },
+            "condition": "OK",
+            "location": "55.7558,37.6173"
+        },
+        ...
+    ]
+    }
      ```
 - **Read (Retrieve Book Details)**
   - URL: GET /api/books/<user_book_id>/
@@ -193,3 +199,58 @@ This project is a RESTful API built with Django and Django REST Framework (DRF) 
          "message": "Book deleted successfully"
      }
      ```
+4. **Search and Filter Books**
+- **Search Books by Title**
+  - URL: GET /api/books/search/?query=<search_term>
+  - Description: Searches for books by title across all users' records.
+  - Example: GET /api/books/search/?query=Harry&page=1
+  - Response:
+      ```json
+      {
+    "count": 20,
+    "next": "http://localhost:8000/api/books/search/?query=Harry&page=2",
+    "previous": null,
+    "results": [
+        {
+            "user_book_id": 1,
+            "book": {
+                "book_id": 1,
+                "name": "Harry Potter and the Philosopher's Stone",
+                "author": "J.K. Rowling",
+                "overview": "A young wizard's journey...",
+                "genres": "Fantasy, Adventure"
+            },
+            "condition": "OK",
+            "location": "55.7558,37.6173"
+        },
+        ...
+    ]
+    }
+      ```
+- **Filter Books by Genres**
+  - URL: GET /api/books/search/?query=<search_term>&genres=<genre1>,<genre2>
+  - Description: Filters search results by genres (comma-separated).
+  - Example: GET /api/books/search/?query=Harry&genres=Fantasy,Adventure&page=1
+  - Response:
+      ```json
+      {
+    "count": 15,
+    "next": "http://localhost:8000/api/books/search/?query=Harry&genres=Fantasy,Adventure&page=2",
+    "previous": null,
+    "results": [
+        {
+            "user_book_id": 1,
+            "book": {
+                "book_id": 1,
+                "name": "Harry Potter and the Philosopher's Stone",
+                "author": "J.K. Rowling",
+                "overview": "A young wizard's journey...",
+                "genres": "Fantasy, Adventure"
+            },
+            "condition": "OK",
+            "location": "55.7558,37.6173"
+        },
+        ...
+    ]
+    }
+      ```

@@ -8,6 +8,9 @@ from django.core.cache import cache
 from django.conf import settings
 from books.serializers import BookSuggestionSerializer, BookCreateSerializer, UserBookCreateSerializer, UserBookSerializer
 from books.models import Book, UserBook
+from accounts.models import User
+from django.contrib.auth import get_user_model
+from rest_framework import generics
 
 class BookSuggestionView(APIView):
     permission_classes = [IsAuthenticated]
@@ -111,18 +114,21 @@ class BookCreateView(APIView):
             return Response({"message": "Book added successfully", "book_id": book.book_id}, status=status.HTTP_201_CREATED)
         return Response(user_book_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class UserBookListView(APIView):
+User = get_user_model()
+
+class UserBookListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = UserBookSerializer
 
-    def get(self, request):
-        user = request.user
-        if user.is_superuser:
-            user_books = UserBook.objects.all()  # Суперпользователь видит все записи
-        else:
-            user_books = UserBook.objects.filter(user=user)  # Обычный пользователь видит только свои записи
-        serializer = UserBookSerializer(user_books, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
+    def get_queryset(self):
+        user_id = self.request.query_params.get('user_id')
+        if user_id:
+            try:
+                target_user = User.objects.get(id=user_id)
+                return UserBook.objects.filter(user=target_user)
+            except User.DoesNotExist:
+                return UserBook.objects.none()  # Возвращаем пустой queryset
+        return UserBook.objects.filter(user=self.request.user)
 class UserBookDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -166,3 +172,26 @@ class UserBookDetailView(APIView):
             return Response({"error": "Book not found or access denied"}, status=status.HTTP_404_NOT_FOUND)
         user_book.delete()
         return Response({"message": "Book deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+class BookSearchView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserBookSerializer
+
+    def get_queryset(self):
+        query = self.request.query_params.get('query', '')
+        genres = self.request.query_params.get('genres', '')
+
+        if not query:
+            return UserBook.objects.none()  # Пустой queryset, если нет query
+
+        books = Book.objects.filter(name__icontains=query)
+        if not books.exists():
+            return UserBook.objects.none()
+
+        if genres:
+            genre_list = [genre.strip() for genre in genres.split(',')]
+            books = books.filter(genres__icontains=genre_list[0])
+            for genre in genre_list[1:]:
+                books = books.filter(genres__icontains=genre)
+
+        return UserBook.objects.filter(book_id__in=books)
