@@ -85,3 +85,54 @@ class UserBookSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserBook
         fields = ['user_book_id', 'book', 'condition', 'location']
+
+
+class PhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Photo
+        fields = ['photo_id', 'user_book_id', 'file_path']
+
+    def validate(self, data):
+        # Проверка, что user_book_id существует и принадлежит пользователю
+        user_book = data.get('user_book_id')
+        if not user_book:
+            raise serializers.ValidationError("user_book_id is required.")
+
+        request = self.context.get('request')
+        if request and not request.user.is_superuser and user_book.user != request.user:
+            raise serializers.ValidationError("You do not have permission to upload photos for this book.")
+
+        return data
+
+    def validate_file_path(self, value):
+        # Проверка формата file_path (URL от Cloudinary)
+        if not value.startswith('https://res.cloudinary.com'):
+            raise serializers.ValidationError("Invalid file path. Must be a valid Cloudinary URL.")
+        return value
+
+
+class PhotoUploadSerializer(serializers.Serializer):
+    user_book_id = serializers.PrimaryKeyRelatedField(queryset=UserBook.objects.all())
+    file = serializers.FileField()
+
+    def validate_file(self, value):
+        # Проверка размера файла (например, не более 5MB)
+        max_size = 5 * 1024 * 1024  # 5MB
+        if value.size > max_size:
+            raise serializers.ValidationError("File size must be less than 5MB.")
+
+        # Проверка формата файла (например, только изображения)
+        allowed_formats = ['image/jpeg', 'image/png', 'image/gif']
+        if value.content_type not in allowed_formats:
+            raise serializers.ValidationError("File must be an image (JPEG, PNG, or GIF).")
+
+        return value
+
+    def validate(self, data):
+        # Проверка прав доступа
+        user_book = data.get('user_book_id')
+        request = self.context.get('request')
+        if request and not request.user.is_superuser and user_book.user != request.user:
+            raise serializers.ValidationError("You do not have permission to upload photos for this book.")
+
+        return data

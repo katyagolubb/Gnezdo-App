@@ -7,6 +7,7 @@ This project is a RESTful API built with Django and Django REST Framework (DRF) 
 - PostgreSQL (or another supported database)
 - A Google Books API key
 - Docker (for Redis caching)
+- Cloudinary account (for photo storage)
 
 ## Installation
 
@@ -253,4 +254,67 @@ This project is a RESTful API built with Django and Django REST Framework (DRF) 
         ...
     ]
     }
+      ```
+5. **Photo Management**
+- **Upload a Photo**
+  - URL: POST /api/books/photos/
+  - Description: Uploads a photo for a specific book record. Only the owner of the book can upload photos. Maximum 5 photos per book.
+  - Body: Form-data with fields:
+    - user_book_id: ID of the UserBook record.
+    - file: Image file (JPEG, PNG, or GIF, max 5MB).
+  - Example: POST /api/books/photos/ with form-data:
+      ```
+      user_book_id: 1
+      file: (binary image file)
+      ```
+  - Response:
+      ```json
+      {
+          "photo_id": 1,
+          "user_book_id": 1,
+          "file_path": "https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/books/1/sample.jpg"
+      }
+      ```
+- **List Photos**
+  - URL: GET /api/books/photos/?user_book_id=<id>
+  - Description: Returns a paginated list of photo URLs for a specific book record. Any authenticated user can view photos.
+  - Example: GET /api/books/photos/?user_book_id=1
+  - Response:
+      ```json
+      [
+          {
+              "photo_id": 1,
+              "user_book_id": 1,
+              "file_path": "https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/books/1/sample.jpg"
+          },
+          ...
+      ]
+      ```
+- **Update a Photo**
+  - URL: PATCH /api/books/photos/<photo_id>/
+  - Description: Replaces an existing photo with a new one. Only the owner of the book can update photos.
+  - Body: Form-data with field:
+    - file: New image file (JPEG, PNG, or GIF, max 5MB).
+  - Example: PATCH /api/books/photos/1/ with form-data:
+      ```
+      user_book_id: 1
+      file: (binary image file)
+      ```
+  - Response:
+      ```json
+      {
+          "photo_id": 1,
+          "user_book_id": 1,
+          "file_path": "https://res.cloudinary.com/your-cloud-name/image/upload/v1234567891/books/1/new-sample.jpg"
+      }
+      ```
+- **Delete a Photo**
+  - URL: DELETE /api/books/photos/<photo_id>/
+  - Description: Deletes a photo record and the file from Cloudinary. Only the owner of the book can delete photos.
+  - Example: DELETE /api/books/photos/1/
+  - Response:
+      ```json
+      {
+          "message": "Photo deleted successfully"
+      }
       ```

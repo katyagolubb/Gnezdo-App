@@ -2,15 +2,15 @@
 import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics
 from rest_framework.permissions import IsAuthenticated
 from django.core.cache import cache
 from django.conf import settings
-from books.serializers import BookSuggestionSerializer, BookCreateSerializer, UserBookCreateSerializer, UserBookSerializer
-from books.models import Book, UserBook
+from books.serializers import BookSuggestionSerializer, BookCreateSerializer, UserBookCreateSerializer, UserBookSerializer, PhotoSerializer, PhotoUploadSerializer
+from books.models import Book, UserBook, Photo
 from accounts.models import User
 from django.contrib.auth import get_user_model
-from rest_framework import generics
+import cloudinary.uploader
 
 class BookSuggestionView(APIView):
     permission_classes = [IsAuthenticated]
@@ -207,3 +207,134 @@ class BookSearchView(generics.ListAPIView):
 
         # Возвращаем записи UserBook, связанные с отфильтрованными книгами
         return UserBook.objects.filter(book_id__in=books).select_related('book_id').prefetch_related('photo_set')
+
+class PhotoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """
+        POST /api/photos/ - Загрузка фото
+        """
+        serializer = PhotoUploadSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            # Загрузка файла в Cloudinary
+            file = serializer.validated_data['file']
+            user_book = serializer.validated_data['user_book_id']
+
+            try:
+                # Загрузка файла в Cloudinary
+                upload_result = cloudinary.uploader.upload(
+                    file,
+                    folder=f"books/{user_book.user_book_id}",  # Храним в папке books/<user_book_id>
+                    resource_type="image"
+                )
+                file_path = upload_result['secure_url']  # Публичный URL файла
+
+                # Сохранение записи в базе
+                photo = Photo.objects.create(
+                    user_book_id=user_book,
+                    file_path=file_path
+                )
+
+                # Сериализация ответа
+                photo_serializer = PhotoSerializer(photo)
+                return Response(photo_serializer.data, status=status.HTTP_201_CREATED)
+
+            except Exception as e:
+                return Response({"error": f"Failed to upload to Cloudinary: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request):
+        """
+        GET /api/photos/?user_book_id=<id> - Получение списка фотографий
+        """
+        user_book_id = request.query_params.get('user_book_id')
+        if not user_book_id:
+            return Response({"error": "user_book_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user_book = UserBook.objects.get(user_book_id=user_book_id)
+        except UserBook.DoesNotExist:
+            return Response({"error": "UserBook not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        photos = Photo.objects.filter(user_book_id=user_book)
+        serializer = PhotoSerializer(photos, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class PhotoDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, photo_id, user):
+        try:
+            photo = Photo.objects.get(photo_id=photo_id)
+            # Проверка прав доступа
+            if not user.is_superuser and photo.user_book_id.user != user:
+                return None
+            return photo
+        except Photo.DoesNotExist:
+            return None
+
+    def delete(self, request, photo_id):
+        """
+        DELETE /api/photos/<id>/ - Удаление фото
+        """
+        photo = self.get_object(photo_id, request.user)
+        if not photo:
+            return Response({"error": "Photo not found or access denied"}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            # Извлечение public_id из URL Cloudinary
+            public_id = photo.file_path.split('/')[-1].split('.')[0]
+            cloudinary.uploader.destroy(
+                f"books/{photo.user_book_id.user_book_id}/{public_id}",
+                resource_type="image"
+            )
+
+            # Удаление записи из базы
+            photo.delete()
+            return Response({"message": "Photo deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+        except Exception as e:
+            return Response({"error": f"Failed to delete from Cloudinary: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def patch(self, request, photo_id):
+        """
+        PATCH /api/photos/<id>/ - Обновление фото
+        """
+        photo = self.get_object(photo_id, request.user)
+        if not photo:
+            return Response({"error": "Photo not found or access denied"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = PhotoUploadSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            file = serializer.validated_data['file']
+
+            try:
+                # Удаление старого файла из Cloudinary
+                public_id = photo.file_path.split('/')[-1].split('.')[0]
+                cloudinary.uploader.destroy(
+                    f"books/{photo.user_book_id.user_book_id}/{public_id}",
+                    resource_type="image"
+                )
+
+                # Загрузка нового файла в Cloudinary
+                upload_result = cloudinary.uploader.upload(
+                    file,
+                    folder=f"books/{photo.user_book_id.user_book_id}",
+                    resource_type="image"
+                )
+                new_file_path = upload_result['secure_url']
+
+                # Обновление записи в базе
+                photo.file_path = new_file_path
+                photo.save()
+
+                # Сериализация ответа
+                photo_serializer = PhotoSerializer(photo)
+                return Response(photo_serializer.data, status=status.HTTP_200_OK)
+
+            except Exception as e:
+                return Response({"error": f"Failed to update photo in Cloudinary: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

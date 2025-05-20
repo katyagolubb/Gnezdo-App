@@ -1,6 +1,24 @@
 # book_microservice/settings.py
 from decouple import config
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Cloudinary конфигурация
+CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME')
+CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY')
+CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET')
+
+# Настройка Cloudinary
+import cloudinary
+cloudinary.config(
+    cloud_name=CLOUDINARY_CLOUD_NAME,
+    api_key=CLOUDINARY_API_KEY,
+    api_secret=CLOUDINARY_API_SECRET,
+    secure=True  # Использовать HTTPS
+)
 
 GOOGLE_API_KEY = config('GOOGLE_API_KEY')
 
