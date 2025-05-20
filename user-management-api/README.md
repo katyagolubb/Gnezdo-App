@@ -1,4 +1,4 @@
-# Gnezdo
+# user-management-api
 ## Prerequisites
 - Python 3.12+
 - PostgreSQL
