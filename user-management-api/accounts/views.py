@@ -79,3 +79,21 @@ class UserDeleteView(APIView):
             return Response({"error": "Вы не можете удалить другого пользователя."}, status=status.HTTP_403_FORBIDDEN)
         user.delete()
         return Response({"message": "Пользователь успешно удален"}, status=status.HTTP_200_OK)
+
+class UserDetailView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        return self.request.user
+
+# Новая вьюха для получения данных другого пользователя по ID
+class OtherUserDetailView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+    queryset = User.objects.all()  # Указываем queryset для поиска пользователей
+
+    def get_object(self):
+        # Получаем пользователя по ID из URL
+        user_id = self.kwargs.get('pk')
+        return self.get_queryset().get(id=user_id)
