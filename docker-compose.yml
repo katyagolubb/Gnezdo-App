@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  api_gateway:
+    build:
+      context: ./api_gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - SERVER_PORT=8000
+    networks:
+      - app_network
+    depends_on:
+      - book-api
+      - user-management-api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  book-api:
+    build:
+      context: ./book-api
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/book-api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+
+  book-api_2:
+    build:
+      context: ./book-api
+    ports:
+      - "5002:5000"
+    networks:
+      - app_network
+
+  user-management-api:
+    build:
+      context: ./user-management-api
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/user-management-api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  user-management-api_2:
+    build:
+      context: ./user-management-api
+    ports:
+      - "5003:5001"
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
