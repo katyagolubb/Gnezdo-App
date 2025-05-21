@@ -35,13 +35,19 @@ class BookCreateSerializer(serializers.ModelSerializer):
         seen = set()
         for genre in genres_list:
             if isinstance(genre, str):
-                parts = genre.split('/')
-                if parts:
-                    last_part = parts[-1].strip()
-                    if last_part and last_part not in seen:
-                        seen.add(last_part)
-                        normalized.append(last_part)
+                parts = [part.strip() for part in genre.split('/') if part.strip()]
+                for part in parts:
+                    if part and part not in seen:
+                        seen.add(part)
+                        normalized.append(part)
         return ', '.join(normalized) if normalized else ''
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Возвращаем жанры как список
+        genres = instance.genres.values_list('name', flat=True)
+        representation['genres'] = list(genres) if genres else ['Unknown']
+        return representation
 
 class UserBookCreateSerializer(serializers.ModelSerializer):
     book_id = serializers.PrimaryKeyRelatedField(queryset=Book.objects.all())
@@ -81,11 +87,20 @@ class UserBookCreateSerializer(serializers.ModelSerializer):
 
 class UserBookSerializer(serializers.ModelSerializer):
     book = BookCreateSerializer(source='book_id', read_only=True)
-    status = serializers.CharField(read_only=True)  # Добавляем статус
+    status = serializers.CharField(read_only=True)
 
     class Meta:
         model = UserBook
         fields = ['user_book_id', 'book', 'condition', 'location', 'status']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if 'book' in representation and 'genres' in representation['book']:
+            genres = representation['book']['genres']
+            if not genres or genres == ['Unknown']:
+                representation['book']['genres'] = ['Unknown']
+            # Уже список, оставляем как есть
+        return representation
 
 class PhotoSerializer(serializers.ModelSerializer):
     class Meta:

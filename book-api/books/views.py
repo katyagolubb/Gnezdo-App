@@ -10,7 +10,7 @@ from books.serializers import (
     BookSuggestionSerializer, BookCreateSerializer, UserBookCreateSerializer,
     UserBookSerializer, PhotoSerializer, PhotoUploadSerializer, ExchangeRequestSerializer
 )
-from books.models import Book, UserBook, Photo, ExchangeRequest
+from books.models import Book, UserBook, Photo, ExchangeRequest, Genre
 from accounts.models import User
 from django.contrib.auth import get_user_model
 import cloudinary.uploader
@@ -52,6 +52,7 @@ class BookSuggestionView(APIView):
             return Response(suggestions)
         return Response({"error": "Failed to fetch suggestions"}, status=response.status_code)
 
+
 class BookCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -69,9 +70,13 @@ class BookCreateView(APIView):
             book_data = response.json().get('volumeInfo', {})
             name = book_data.get('title', '')
             genres = book_data.get('categories', ['Unknown'])
-            normalized_genres = ', '.join(g.split('/')[-1].strip() for g in genres if '/' in g)
-            if not normalized_genres and genres:
-                normalized_genres = genres[0].split('/')[-1].strip()
+            # Разбиваем жанры по слешам и сохраняем все уникальные части
+            all_genres = set()
+            for g in genres:
+                parts = [part.strip() for part in g.split('/') if part.strip()]
+                all_genres.update(parts)
+            normalized_genres = ', '.join(all_genres) if all_genres else 'Unknown'
+            logger.debug(f"Normalized genres from API: {normalized_genres}")
 
             book_data_to_save = {
                 'name': name,
@@ -83,7 +88,8 @@ class BookCreateView(APIView):
             required_fields = ['name', 'author', 'overview', 'genres']
             for field in required_fields:
                 if field not in data or not data[field]:
-                    return Response({"error": f"{field} is required for custom book"}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error": f"{field} is required for custom book"},
+                                    status=status.HTTP_400_BAD_REQUEST)
 
             book_data_to_save = {
                 'name': data['name'],
@@ -92,14 +98,30 @@ class BookCreateView(APIView):
                 'genres': data['genres'],
             }
 
+        # Создаем книгу
         book, created = Book.objects.get_or_create(
             name=book_data_to_save['name'],
             defaults={
                 'author': book_data_to_save['author'],
                 'overview': book_data_to_save['overview'],
-                'genres': book_data_to_save['genres'],
             }
         )
+
+        # Обрабатываем жанры
+        if 'genres' in book_data_to_save and book_data_to_save['genres']:
+            genres_str = book_data_to_save['genres']
+            genre_names = [g.strip() for g in genres_str.split(',') if g.strip()]
+            logger.debug(f"Genre names to process: {genre_names}")
+            if genre_names:
+                genres_objects = []
+                for name in genre_names:
+                    genre, _ = Genre.objects.get_or_create(name=name)
+                    genres_objects.append(genre)
+                    logger.debug(f"Created/Found genre: {name}, ID: {genre.id}")
+                book.genres.set(genres_objects)
+                logger.debug(f"Genres set for book {book.book_id}: {list(book.genres.values_list('name', flat=True))}")
+            else:
+                logger.warning(f"No valid genres found in: {genres_str}")
 
         user_book_data = {
             'user': user.id,
@@ -110,7 +132,8 @@ class BookCreateView(APIView):
         user_book_serializer = UserBookCreateSerializer(data=user_book_data)
         if user_book_serializer.is_valid():
             user_book_serializer.save()
-            return Response({"message": "Book added successfully", "book_id": book.book_id}, status=status.HTTP_201_CREATED)
+            return Response({"message": "Book added successfully", "book_id": book.book_id, "genres": list(book.genres.values_list('name', flat=True))},
+                            status=status.HTTP_201_CREATED)
         return Response(user_book_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 User = get_user_model()
