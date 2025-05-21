@@ -318,3 +318,60 @@ This project is a RESTful API built with Django and Django REST Framework (DRF) 
           "message": "Photo deleted successfully"
       }
       ```
+6. **Exchange Management**
+   - **Create an Exchange Request**  
+     - URL: POST /api/exchange-requests/  
+     - Description: Allows a user to request a book from another user.  
+     - Body:  
+       ```json
+       {
+           "user_book_id": 1
+       }
+     - Response (201):
+         ```json
+         {
+             "exchange_request_id": 1,
+             "book": {...},
+             "requester": "username",
+             "owner": "ownername",
+             "status": "pending",
+             "created_at": "2025-05-21T20:06:00Z"
+         }
+         ```
+   - **Manage Exchange Request**
+     - URL: PATCH /api/exchange-requests/<exchange_request_id>/
+     - Description: Allows the book owner to accept or reject a request.
+     - Body:
+         ```json
+         {
+             "action": "accept"  # or "reject"
+         }
+         ```
+     - Response (200):
+         ```json
+         {
+             "exchange_request_id": 1,
+             "book": {...},
+             "requester": "username",
+             "owner": "ownername",
+             "status": "accepted",  # or "rejected"
+             "created_at": "2025-05-21T20:06:00Z"
+         }
+         ```
+   - **List User Exchanges**
+     - URL: GET /api/exchange-requests/list/
+     - Description: Returns a list of exchange requests where the user is either the requester or owner.
+     - Response (200):
+        ```json
+        [
+            {
+                "exchange_request_id": 1,
+                "book": {...},
+                "requester": "username",
+                "owner": "ownername",
+                "status": "accepted",
+                "created_at": "2025-05-21T20:06:00Z"
+            },
+            ...
+        ]
+        ```

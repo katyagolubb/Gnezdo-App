@@ -1,6 +1,6 @@
 # books/serializers.py
 from rest_framework import serializers
-from books.models import Book, UserBook, Photo
+from books.models import Book, UserBook, Photo, ExchangeRequest
 from accounts.models import User
 
 class BookSuggestionSerializer(serializers.Serializer):
@@ -81,11 +81,11 @@ class UserBookCreateSerializer(serializers.ModelSerializer):
 
 class UserBookSerializer(serializers.ModelSerializer):
     book = BookCreateSerializer(source='book_id', read_only=True)
+    status = serializers.CharField(read_only=True)  # Добавляем статус
 
     class Meta:
         model = UserBook
-        fields = ['user_book_id', 'book', 'condition', 'location']
-
+        fields = ['user_book_id', 'book', 'condition', 'location', 'status']
 
 class PhotoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -93,7 +93,6 @@ class PhotoSerializer(serializers.ModelSerializer):
         fields = ['photo_id', 'user_book_id', 'file_path']
 
     def validate(self, data):
-        # Проверка, что user_book_id существует и принадлежит пользователю
         user_book = data.get('user_book_id')
         if not user_book:
             raise serializers.ValidationError("user_book_id is required.")
@@ -105,23 +104,19 @@ class PhotoSerializer(serializers.ModelSerializer):
         return data
 
     def validate_file_path(self, value):
-        # Проверка формата file_path (URL от Cloudinary)
         if not value.startswith('https://res.cloudinary.com'):
             raise serializers.ValidationError("Invalid file path. Must be a valid Cloudinary URL.")
         return value
-
 
 class PhotoUploadSerializer(serializers.Serializer):
     user_book_id = serializers.PrimaryKeyRelatedField(queryset=UserBook.objects.all())
     file = serializers.FileField()
 
     def validate_file(self, value):
-        # Проверка размера файла (например, не более 5MB)
         max_size = 5 * 1024 * 1024  # 5MB
         if value.size > max_size:
             raise serializers.ValidationError("File size must be less than 5MB.")
 
-        # Проверка формата файла (например, только изображения)
         allowed_formats = ['image/jpeg', 'image/png', 'image/gif']
         if value.content_type not in allowed_formats:
             raise serializers.ValidationError("File must be an image (JPEG, PNG, or GIF).")
@@ -129,10 +124,18 @@ class PhotoUploadSerializer(serializers.Serializer):
         return value
 
     def validate(self, data):
-        # Проверка прав доступа
         user_book = data.get('user_book_id')
         request = self.context.get('request')
         if request and not request.user.is_superuser and user_book.user != request.user:
             raise serializers.ValidationError("You do not have permission to upload photos for this book.")
 
         return data
+
+class ExchangeRequestSerializer(serializers.ModelSerializer):
+    book = UserBookSerializer(read_only=True)
+    requester = serializers.StringRelatedField(read_only=True)
+    owner = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = ExchangeRequest
+        fields = ['exchange_request_id', 'book', 'requester', 'owner', 'status', 'created_at']
