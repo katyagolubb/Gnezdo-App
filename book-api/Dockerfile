@@ -11,4 +11,5 @@ RUN python manage.py collectstatic --noinput
 RUN python manage.py makemigrations
 RUN python manage.py migrate
 
+
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "book_microservice.wsgi:application"]

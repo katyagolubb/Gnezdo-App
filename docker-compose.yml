@@ -1,25 +1,13 @@
-
 services:
-  api_gateway:
+  krakend:
+    container_name: krakend
     build:
-      context: ./api_gateway
+      context: ./krakend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
-    environment:
-      - SERVER_PORT=8000
+      - "8080:8080"
     networks:
       - app_network
-    depends_on:
-      - user-management-api
-      - user-management-api_2
-      - book-api
-      - book-api_2
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   book-api:
     build:
@@ -29,26 +17,6 @@ services:
       - "5000:5000"
     networks:
       - app_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/book-api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-
-  book-api_2:
-    build:
-      context: ./book-api
-      dockerfile: Dockerfile
-    ports:
-      - "5002:5000"
-    networks:
-      - app_network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:5000/book-api/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   user-management-api:
     build:
@@ -58,29 +26,6 @@ services:
       - "5001:5001"
     networks:
       - app_network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/user-management-api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-
-  user-management-api_2:
-    build:
-      context: ./user-management-api
-      dockerfile: Dockerfile
-    ports:
-      - "5003:5001"
-    networks:
-      - app_network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:5001/user-management-api/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
 networks:
   app_network:
