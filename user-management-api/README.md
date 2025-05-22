@@ -3,6 +3,7 @@
 - Python 3.12+
 - PostgreSQL
 - Git
+- Cloudinary account (for photo uploads)
 ## Setup
 1. **Clone the repository**:
    ```bash
@@ -51,7 +52,11 @@
     {
         "username": "testuser",
         "email": "test@example.com",
-        "password": "securepassword123"
+        "password": "securepassword123",
+        "first_name": "John",
+        "last_name": "Doe",
+        "phone": "+79991234567",
+        "photo": "(upload a file via multipart/form-data)"
     }
     ```
 - Obtain Authentication Token: POST http://localhost:8001/api/token/
@@ -65,6 +70,29 @@
     {
         "access": "your_access_token",
         "refresh": "your_refresh_token"
+    }
+    ```
+- Get Current User Data: GET http://localhost:8000/api/me/ (requires authentication):
+    ```json
+    {
+        "id": 1,
+        "username": "testuser",
+        "email": "test@example.com",
+        "first_name": "John",
+        "last_name": "Doe",
+        "phone": "+79991234567",
+        "photo": "image/upload/v1747851859/users/example.jpg"
+    }
+    ```
+- Get Other User Data: GET http://localhost:8000/api/users/<id>/ (requires authentication):
+    ```json
+    {
+        "id": 1,
+        "username": "testuser",
+        "first_name": "John",
+        "last_name": "Doe",
+        "phone": "+79991234567",
+        "photo": "image/upload/v1747851859/users/example.jpg"
     }
     ```
 - Update User Data: PUT http://localhost:8000/api/update/ (requires authentication)
@@ -88,7 +116,7 @@
         "token": "abc123"
     }
     ```
-- Delete User: DELETE http://localhost:8000/api/delete/
+- Delete User: DELETE http://localhost:8000/api/delete/ (requires authentication)
 
 ## Admin Panel
 - Access the admin panel at http://localhost:8000/admin/.
