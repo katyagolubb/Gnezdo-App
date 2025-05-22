@@ -1,18 +1,16 @@
-# Используем официальный образ Python
 FROM python:3.11-slim
 
-# Устанавливаем рабочую директорию
 WORKDIR /app
-
-# Копируем зависимости
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Копируем код проекта
 COPY . .
 
-# Указываем порт
-EXPOSE 8000
+RUN mkdir -p staticfiles
+RUN python manage.py collectstatic --noinput
+RUN python manage.py makemigrations
+RUN python manage.py migrate
 
-# Команда для запуска
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "api_gateway.wsgi:application"]
+RUN pip install uvicorn
+
+EXPOSE 8000
+CMD ["uvicorn", "api_gateway.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
