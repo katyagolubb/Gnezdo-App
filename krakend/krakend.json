@@ -1,0 +1,452 @@
+{
+  "version": 3,
+  "endpoints": [
+    {
+      "endpoint": "/api/register",
+      "method": "POST",
+      "output_encoding": "json",
+      "input_headers": ["Content-Type"],
+      "backend": [
+        {
+          "url_pattern": "/api/register/",
+          "host": ["http://user-management-api:5001"],
+          "method": "POST"
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/token",
+      "method": "POST",
+      "output_encoding": "json",
+      "input_headers": ["Content-Type"],
+      "backend": [
+        {
+          "url_pattern": "/api/token/",
+          "host": ["http://user-management-api:5001"],
+          "method": "POST"
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/token/refresh",
+      "method": "POST",
+      "output_encoding": "json",
+      "input_headers": ["Content-Type"],
+      "backend": [
+        {
+          "url_pattern": "/api/token/refresh/",
+          "host": ["http://user-management-api:5001"],
+          "method": "POST"
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/me",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Authorization"],
+      "backend": [
+        {
+          "url_pattern": "/api/me/",
+          "host": ["http://user-management-api:5001"],
+          "method": "GET"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/update",
+      "method": "PUT",
+      "output_encoding": "json",
+      "input_headers": ["Authorization", "Content-Type"],
+      "backend": [
+        {
+          "url_pattern": "/api/update/",
+          "host": ["http://user-management-api:5001"],
+          "method": "PUT"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/delete",
+      "method": "DELETE",
+      "input_headers": ["Authorization"],
+      "backend": [
+        {
+          "url_pattern": "/api/delete/",
+          "host": ["http://user-management-api:5001"],
+          "method": "DELETE"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/password-reset",
+      "method": "POST",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/api/password-reset/",
+          "host": ["http://user-management-api:5001"],
+          "method": "POST"
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/password-reset/confirm",
+      "method": "POST",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/api/password-reset/confirm/",
+          "host": ["http://user-management-api:5001"],
+          "method": "POST"
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/users/{id}",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Authorization"],
+      "backend": [
+        {
+          "url_pattern": "/api/users/{id}/",
+          "host": ["http://user-management-api:5001"],
+          "method": "GET"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/books/suggestions",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Authorization"],
+      "backend": [
+        {
+          "url_pattern": "/api/books/suggestions/",
+          "host": ["http://book-api:5000"],
+          "method": "GET"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/books",
+      "method": "POST",
+      "output_encoding": "json",
+      "input_headers": ["Authorization", "Content-Type"],
+      "backend": [
+        {
+          "url_pattern": "/api/books/",
+          "host": ["http://book-api:5000"],
+          "method": "POST"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/books/list",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Authorization"],
+      "backend": [
+        {
+          "url_pattern": "/api/books/list/",
+          "host": ["http://book-api:5000"],
+          "method": "GET"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/books/{user_book_id}",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Authorization"],
+      "backend": [
+        {
+          "url_pattern": "/api/books/{user_book_id}/",
+          "host": ["http://book-api:5000"],
+          "method": "GET"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/books/{user_book_id}",
+      "method": "PUT",
+      "output_encoding": "json",
+      "input_headers": ["Authorization", "Content-Type"],
+      "backend": [
+        {
+          "url_pattern": "/api/books/{user_book_id}/",
+          "host": ["http://book-api:5000"],
+          "method": "PUT"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/books/{user_book_id}",
+      "method": "DELETE",
+      "input_headers": ["Authorization"],
+      "backend": [
+        {
+          "url_pattern": "/api/books/{user_book_id}/",
+          "host": ["http://book-api:5000"],
+          "method": "DELETE"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/books/search",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Authorization"],
+      "backend": [
+        {
+          "url_pattern": "/api/books/search/",
+          "host": ["http://book-api:5000"],
+          "method": "GET"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/books/photos",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Authorization"],
+      "backend": [
+        {
+          "url_pattern": "/api/books/photos/",
+          "host": ["http://book-api:5000"],
+          "method": "GET"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/books/photos",
+      "method": "POST",
+      "output_encoding": "json",
+      "input_headers": ["Authorization", "Content-Type"],
+      "backend": [
+        {
+          "url_pattern": "/api/books/photos/",
+          "host": ["http://book-api:5000"],
+          "method": "POST"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/books/photos/{photo_id}",
+      "method": "PATCH",
+      "output_encoding": "json",
+      "input_headers": ["Authorization", "Content-Type"],
+      "backend": [
+        {
+          "url_pattern": "/api/books/photos/{photo_id}/",
+          "host": ["http://book-api:5000"],
+          "method": "PATCH"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/books/photos/{photo_id}",
+      "method": "DELETE",
+      "input_headers": ["Authorization"],
+      "backend": [
+        {
+          "url_pattern": "/api/books/photos/{photo_id}/",
+          "host": ["http://book-api:5000"],
+          "method": "DELETE"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/exchange-requests",
+      "method": "POST",
+      "output_encoding": "json",
+      "input_headers": ["Authorization", "Content-Type"],
+      "backend": [
+        {
+          "url_pattern": "/api/exchange-requests/",
+          "host": ["http://book-api:5000"],
+          "method": "POST"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/exchange-requests/{exchange_request_id}",
+      "method": "PATCH",
+      "output_encoding": "json",
+      "input_headers": ["Authorization", "Content-Type"],
+      "backend": [
+        {
+          "url_pattern": "/api/exchange-requests/{exchange_request_id}/",
+          "host": ["http://book-api:5000"],
+          "method": "PATCH"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/exchange-requests/list",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Authorization"],
+      "backend": [
+        {
+          "url_pattern": "/api/exchange-requests/list/",
+          "host": ["http://book-api:5000"],
+          "method": "GET"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/books/owners",
+      "method": "POST",
+      "output_encoding": "json",
+      "input_headers": ["Authorization", "Content-Type"],
+      "backend": [
+        {
+          "url_pattern": "/api/books/owners/",
+          "host": ["http://book-api:5000"],
+          "method": "POST"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    },
+    {
+      "endpoint": "/api/books/all",
+      "method": "GET",
+      "output_encoding": "json",
+      "input_headers": ["Authorization"],
+      "backend": [
+        {
+          "url_pattern": "/api/books/all/",
+          "host": ["http://book-api:5000"],
+          "method": "GET"
+        }
+      ],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://user-management-api:5001/jwks"
+        }
+      }
+    }
+  ],
+  "extra_config": {
+    "security/cors": {
+      "allow_origins": ["*"],
+      "allow_methods": ["GET", "POST", "PUT", "PATCH", "DELETE"],
+      "allow_headers": ["Authorization", "Content-Type"]
+    }
+  }
+}
