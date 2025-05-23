@@ -375,3 +375,49 @@ This project is a RESTful API built with Django and Django REST Framework (DRF) 
             ...
         ]
         ```
+7. **Additional Admin Endpoints**
+- **List All User Books (Admin Only)**
+  - URL: GET /api/books/all/
+  - Description: Returns a list of all user books (accessible only to superusers).
+  - Example: GET /api/books/all/?page=1
+  - Response:
+      ```json
+      {
+          "count": 100,
+          "next": "http://localhost:8000/api/books/all/?page=2",
+          "previous": null,
+          "results": [
+              {
+                  "user_book_id": 1,
+                  "book": {
+                      "book_id": 1,
+                      "name": "My Custom Book",
+                      "author": "John Doe",
+                      "overview": "This is a custom book description.",
+                      "genres": ["Fiction", "Adventure"]
+                  },
+                  "condition": "OK",
+                  "location": "55.7558,37.6173",
+                  "status": "available"
+              },
+              ...
+          ]
+      }
+      ```
+- **Get Book Owners**
+  - URL: POST /api/books/owners/
+  - Description: Returns a mapping of user_book_ids to user IDs for a list of book IDs.
+  - Body:
+      ```json
+      {
+          "user_book_ids": [1, 2, 3]
+      }
+      ```
+  - Response:
+      ```json
+      {
+          "1": 1,
+          "2": 2,
+          "3": 3
+      }
+      ```

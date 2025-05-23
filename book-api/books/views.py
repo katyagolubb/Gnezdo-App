@@ -3,7 +3,7 @@ import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.core.cache import cache
 from django.conf import settings
 from books.serializers import (
@@ -14,6 +14,16 @@ from books.models import Book, UserBook, Photo, ExchangeRequest, Genre
 from accounts.models import User
 from django.contrib.auth import get_user_model
 import cloudinary.uploader
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+
+
+class AllUserBooksView(generics.ListAPIView):
+    permission_classes = [IsAdminUser]  # Только для суперпользователей
+    serializer_class = UserBookSerializer
+
+    def get_queryset(self):
+        return UserBook.objects.all().select_related('book_id').prefetch_related('book_id__genres')
 
 # Существующие представления (оставляем без изменений)
 class BookSuggestionView(APIView):
@@ -76,8 +86,6 @@ class BookCreateView(APIView):
                 parts = [part.strip() for part in g.split('/') if part.strip()]
                 all_genres.update(parts)
             normalized_genres = ', '.join(all_genres) if all_genres else 'Unknown'
-            logger.debug(f"Normalized genres from API: {normalized_genres}")
-
             book_data_to_save = {
                 'name': name,
                 'author': ', '.join(book_data.get('authors', ['Unknown'])),
@@ -111,17 +119,12 @@ class BookCreateView(APIView):
         if 'genres' in book_data_to_save and book_data_to_save['genres']:
             genres_str = book_data_to_save['genres']
             genre_names = [g.strip() for g in genres_str.split(',') if g.strip()]
-            logger.debug(f"Genre names to process: {genre_names}")
             if genre_names:
                 genres_objects = []
                 for name in genre_names:
                     genre, _ = Genre.objects.get_or_create(name=name)
                     genres_objects.append(genre)
-                    logger.debug(f"Created/Found genre: {name}, ID: {genre.id}")
                 book.genres.set(genres_objects)
-                logger.debug(f"Genres set for book {book.book_id}: {list(book.genres.values_list('name', flat=True))}")
-            else:
-                logger.warning(f"No valid genres found in: {genres_str}")
 
         user_book_data = {
             'user': user.id,
@@ -142,15 +145,18 @@ class UserBookListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserBookSerializer
 
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
     def get_queryset(self):
         user_id = self.request.query_params.get('user_id')
         if user_id:
             try:
                 target_user = User.objects.get(id=user_id)
-                return UserBook.objects.filter(user=target_user).select_related('book_id')
+                return UserBook.objects.filter(user=target_user).select_related('book_id').prefetch_related('book_id__genres')
             except User.DoesNotExist:
                 return UserBook.objects.none()
-        return UserBook.objects.filter(user=self.request.user).select_related('book_id')
+        return UserBook.objects.filter(user=self.request.user).select_related('book_id').prefetch_related('book_id__genres')
 
 class UserBookDetailView(APIView):
     permission_classes = [IsAuthenticated]
@@ -200,6 +206,10 @@ class BookSearchView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserBookSerializer
 
+    @method_decorator(cache_page(60 * 15))  # Кэш на 15 минут
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
     def get_queryset(self):
         query = self.request.query_params.get('query', '')
         genres = self.request.query_params.get('genres', '')
@@ -212,9 +222,7 @@ class BookSearchView(generics.ListAPIView):
 
         if genres:
             genre_list = [genre.strip() for genre in genres.split(',')]
-            books = books.filter(genres__icontains=genre_list[0])
-            for genre in genre_list[1:]:
-                books = books.filter(genres__icontains=genre)
+            books = books.filter(genres__name__in=genre_list).distinct()
 
         if author:
             books = books.filter(author__icontains=author)
@@ -224,8 +232,8 @@ class BookSearchView(generics.ListAPIView):
 
         return UserBook.objects.filter(
             book_id__in=books,
-            status='available'  # Только доступные книги
-        ).select_related('book_id').prefetch_related('photo_set')
+            status='available'
+        ).select_related('book_id').prefetch_related('book_id__genres', 'photo_set')
 
 class PhotoView(APIView):
     permission_classes = [IsAuthenticated]
@@ -427,3 +435,12 @@ class UserExchangeListView(generics.ListAPIView):
         # Книги, которые пользователь отдал (его книги, которые запросили другие)
         owned = ExchangeRequest.objects.filter(owner=self.request.user)
         return requested.union(owned)
+
+class UserBookOwnersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user_book_ids = request.data.get("user_book_ids", [])
+        user_books = UserBook.objects.filter(user_book_id__in=user_book_ids).select_related('user')
+        result = {str(ub.user_book_id): ub.user.id for ub in user_books}
+        return Response(result, status=status.HTTP_200_OK)

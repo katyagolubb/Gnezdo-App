@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     BookSuggestionView, BookCreateView, UserBookListView,
     UserBookDetailView, BookSearchView, PhotoView, PhotoDetailView,
-    ExchangeRequestView, ExchangeRequestDetailView, UserExchangeListView
+    ExchangeRequestView, ExchangeRequestDetailView, UserExchangeListView, UserBookOwnersView, AllUserBooksView
 )
 
 urlpatterns = [
@@ -16,4 +16,6 @@ urlpatterns = [
     path('exchange-requests/', ExchangeRequestView.as_view(), name='exchange-request-create'),
     path('exchange-requests/<int:exchange_request_id>/', ExchangeRequestDetailView.as_view(), name='exchange-request-detail'),
     path('exchange-requests/list/', UserExchangeListView.as_view(), name='user-exchange-list'),
+    path('books/owners/', UserBookOwnersView.as_view(), name='user-book-owners'),
+    path('books/all/', AllUserBooksView.as_view(), name='all-user-books'),
 ]

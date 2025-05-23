@@ -16,15 +16,19 @@ class Book(models.Model):
 
     class Meta:
         db_table = 'books'
+        indexes = [
+            models.Index(fields=['name'], name='idx_book_name'),
+            models.Index(fields=['author'], name='idx_book_author'),
+        ]
 
     def __str__(self):
         return self.name
 
 class UserBook(models.Model):
     STATUS_CHOICES = (
-        ('available', 'Available'),  # Доступна для обмена
-        ('requested', 'Requested'),  # Запрошена другим пользователем
-        ('exchanged', 'Exchanged'),  # Уже передана
+        ('available', 'Available'),
+        ('requested', 'Requested'),
+        ('exchanged', 'Exchanged'),
     )
 
     user_book_id = models.AutoField(primary_key=True)
@@ -32,14 +36,17 @@ class UserBook(models.Model):
     book_id = models.ForeignKey(Book, on_delete=models.CASCADE)
     condition = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')  # Новый статус
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
 
     class Meta:
         db_table = 'user_books'
+        indexes = [
+            models.Index(fields=['user', 'status'], name='idx_userbook_user_status'),
+            models.Index(fields=['book_id'], name='idx_userbook_book_id'),
+        ]
 
     def __str__(self):
         return f"{self.book_id.name} (User: {self.user.username})"
-
 class Photo(models.Model):
     photo_id = models.AutoField(primary_key=True)
     user_book_id = models.ForeignKey(UserBook, on_delete=models.CASCADE)
