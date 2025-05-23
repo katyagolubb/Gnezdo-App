@@ -107,4 +107,5 @@ secrets.json
 # Custom
 node_modules/
 package-lock.json
-yarn.lock
+yarn.lock.idea/
+api_gateway/.idea/
