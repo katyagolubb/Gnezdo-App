@@ -31,7 +31,7 @@ JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 REDIS_DB = int(os.getenv("REDIS_DB", 0))
-BASE_API_URL = os.getenv("BASE_API_URL", "http://localhost:8000/api")
+BASE_API_URL = os.getenv("BASE_API_URL", "http://book-api:5000/api")
 APP_PORT = int(os.getenv("APP_PORT", 8002))
 
 # Асинхронный Redis-клиент для FastAPI

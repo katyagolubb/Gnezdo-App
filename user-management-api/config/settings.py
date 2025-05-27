@@ -109,6 +109,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Для фронтенда, если используете
 ]
 
+ALLOWED_HOSTS = ["*"]
+
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True

@@ -1,14 +1,54 @@
 services:
-  krakend:
-    container_name: krakend
+#  krakend:
+#    container_name: krakend
+#    build:
+#      context: ./krakend
+#      dockerfile: Dockerfile
+#    ports:
+#      - "8080:8080"
+#    networks:
+#      - app_network
+#    restart: always
+
+
+  recommendation-service:
     build:
-      context: ./krakend
+      context: ./recommendation-service
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "8002:8002"
     networks:
       - app_network
-    restart: always
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+
+
+  redis:
+    image: redis:7.0
+    ports:
+      - "6379:6379"
+    networks:
+      - app_network
+
+  api_gateway:
+    build:
+      context: ./api_gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    networks:
+      - app_network
+    depends_on:
+      - user-management-api
+      - book-api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   book-api:
     build:
@@ -18,7 +58,11 @@ services:
       - "5000:5000"
     networks:
       - app_network
-
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:5000/api/books/suggestions/"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 3
 
   user-management-api:
     build:
@@ -29,6 +73,30 @@ services:
     networks:
       - app_network
     restart: always
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:5001/api/register/"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 3
+
+  # Если нужна балансировка нагрузки, раскомментируйте:
+  # book-api_2:
+  #   build:
+  #     context: ./book-api
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "5002:5000"
+  #   networks:
+  #     - app_network
+
+  # user-management-api_2:
+  #   build:
+  #     context: ./user-management-api
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "5003:5001"
+  #   networks:
+  #     - app_network
 
 networks:
   app_network:
