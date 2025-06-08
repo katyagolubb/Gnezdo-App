@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Книжный обмен</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        nav {
+            background-color: #333;
+            padding: 1rem;
+        }
+        nav a {
+            color: white;
+            margin: 0 1rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        input, button, select {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #555;
+        }
+        .result {
+            margin-top: 1rem;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .hidden {
+            display: none;
+        }
+        .book-card {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        .book-card img {
+            max-width: 100px;
+            margin-top: 0.5rem;
+        }
+        .error {
+            color: red;
+        }
+        .exchange-request {
+            background-color: #f9f9f9;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a onclick="showSection('home')">Главная</a>
+        <a onclick="showSection('register')">Регистрация</a>
+        <a onclick="showSection('login')">Вход</a>
+        <a onclick="showSection('profile')" class="auth-only hidden">Профиль</a>
+        <a onclick="showSection('books')">Книги</a>
+        <a onclick="showSection('exchange-requests')" class="auth-only hidden">Обмены</a>
+        <a onclick="showSection('recommendations')">Рекомендации</a>
+        <a onclick="logout()" class="auth-only hidden">Выход</a>
+    </nav>
+    <div class="container">
+        <h1>Книжный обмен</h1>
+        <div id="home" class="section">
+            <h2>Добро пожаловать</h2>
+            <p>Используйте навигацию для регистрации, входа, управления книгами, обмена или просмотра рекомендаций.</p>
+        </div>
+        <div id="register" class="section hidden">
+            <h2>Регистрация</h2>
+            <div class="form-group">
+                <label for="register-username">Имя пользователя</label>
+                <input id="register-username" type="text" placeholder="Имя пользователя">
+            </div>
+            <div class="form-group">
+                <label for="register-email">Email</label>
+                <input id="register-email" type="email" placeholder="Email" required>
+            </div>
+            <div class="form-group">
+                <label for="register-password">Пароль</label>
+                <input id="register-password" type="password" placeholder="Пароль" required>
+            </div>
+            <div class="form-group">
+                <label for="register-first-name">Имя</label>
+                <input id="register-first-name" type="text" placeholder="Имя" required>
+            </div>
+            <div class="form-group">
+                <label for="register-last-name">Фамилия</label>
+                <input id="register-last-name" type="text" placeholder="Фамилия" required>
+            </div>
+            <div class="form-group">
+                <label for="register-phone">Телефон</label>
+                <input id="register-phone" type="text" placeholder="Телефон">
+            </div>
+            <div class="form-group">
+                <label for="register-photo">Фото профиля</label>
+                <input id="register-photo" type="file" accept="image/*">
+            </div>
+            <button onclick="register()">Зарегистрироваться</button>
+            <div id="register-result" class="result hidden"></div>
+        </div>
+        <div id="login" class="section hidden">
+            <h2>Вход</h2>
+            <div class="form-group">
+                <label for="login-username">Имя пользователя</label>
+                <input id="login-username" type="text" placeholder="Имя пользователя">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Пароль</label>
+                <input id="login-password" type="password" placeholder="Пароль">
+            </div>
+            <button onclick="login()">Войти</button>
+            <div id="login-result" class="result hidden"></div>
+        </div>
+        <div id="profile" class="section hidden">
+            <h2>Профиль</h2>
+            <div id="profile-info" class="result"></div>
+            <h3>Обновить профиль</h3>
+            <div class="form-group">
+                <label for="update-username">Имя пользователя</label>
+                <input id="update-username" type="text" placeholder="Новое имя пользователя">
+            </div>
+            <div class="form-group">
+                <label for="update-email">Email</label>
+                <input id="update-email" type="email" placeholder="Новый email">
+            </div>
+            <div class="form-group">
+                <label for="update-first-name">Имя</label>
+                <input id="update-first-name" type="text" placeholder="Новое имя">
+            </div>
+            <div class="form-group">
+                <label for="update-last-name">Фамилия</label>
+                <input id="update-last-name" type="text" placeholder="Новая фамилия">
+            </div>
+            <div class="form-group">
+                <label for="update-phone">Телефон</label>
+                <input id="update-phone" type="text" placeholder="Новый телефон">
+            </div>
+            <div class="form-group">
+                <label for="update-photo">Новое фото профиля</label>
+                <input id="update-photo" type="file" accept="image/*">
+            </div>
+            <button onclick="updateProfile()">Обновить</button>
+            <div id="update-result" class="result hidden"></div>
+        </div>
+        <div id="books" class="section hidden">
+            <h2>Книги</h2>
+            <div class="form-group">
+                <label for="search-query">Поиск книг</label>
+                <input id="search-query" type="text" placeholder="Название книги">
+                <input id="search-genres" type="text" placeholder="Жанры (через запятую)">
+                <input id="search-author" type="text" placeholder="Автор">
+                <button onclick="searchBooks()">Поиск</button>
+            </div>
+            <div class="form-group">
+                <label for="add-book-title">Название книги</label>
+                <input id="add-book-title" type="text" placeholder="Название книги">
+            </div>
+            <div class="form-group">
+                <label for="add-book-author">Автор</label>
+                <input id="add-book-author" type="text" placeholder="Автор">
+            </div>
+            <div class="form-group">
+                <label for="add-book-overview">Описание</label>
+                <input id="add-book-overview" type="text" placeholder="Описание">
+            </div>
+            <div class="form-group">
+                <label for="add-book-genres">Жанры (через запятую)</label>
+                <input id="add-book-genres" type="text" placeholder="Жанры">
+            </div>
+            <div class="form-group">
+                <label for="add-book-condition">Состояние</label>
+                <input id="add-book-condition" type="text" placeholder="Состояние книги">
+            </div>
+            <div class="form-group">
+                <label for="add-book-location">Местоположение (lat,lon)</label>
+                <input id="add-book-location" type="text" placeholder="55.7558,37.6173">
+            </div>
+            <div class="form-group">
+                <label for="add-book-photo">Фото книги</label>
+                <input id="add-book-photo" type="file" accept="image/*">
+            </div>
+            <button onclick="addBook()">Добавить книгу</button>
+            <div id="books-result" class="result hidden"></div>
+            <h3>Мои книги</h3>
+            <div id="my-books" class="result hidden"></div>
+        </div>
+        <div id="exchange-requests" class="section hidden">
+            <h2>Запросы на обмен</h2>
+            <div class="form-group">
+                <label for="exchange-book-id">ID книги для обмена</label>
+                <input id="exchange-book-id" type="number" placeholder="Введите user_book_id">
+                <button onclick="createExchangeRequest()">Создать запрос</button>
+            </div>
+            <div id="exchange-result" class="result hidden"></div>
+            <h3>Мои запросы</h3>
+            <div id="exchange-list" class="result hidden"></div>
+        </div>
+        <div id="recommendations" class="section hidden">
+            <h2>Рекомендации</h2>
+            <button onclick="getRecommendations()">Получить рекомендации</button>
+            <div id="recommendations-result" class="result hidden"></div>
+        </div>
+    </div>
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/api';
+        let token = localStorage.getItem('token') || null;
+        let userId = localStorage.getItem('userId') || null;
+
+        window.onload = () => {
+            updateAuthUI();
+            showSection('home');
+            if (token) {
+                getProfile();
+                getMyBooks();
+                getExchangeRequests();
+            }
+        };
+
+        function updateAuthUI() {
+            const authElements = document.querySelectorAll('.auth-only');
+            authElements.forEach(el => {
+                el.classList.toggle('hidden', !token);
+            });
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        async function uploadPhoto(file, resultDiv) {
+            if (!file) return true;
+            const formData = new FormData();
+            formData.append('photo', file);
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/update`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    resultDiv.textContent = 'Ошибка загрузки фото: ' + JSON.stringify(data, null, 2);
+                    resultDiv.classList.add('error');
+                    resultDiv.classList.remove('hidden');
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                resultDiv.textContent = 'Ошибка загрузки фото: ' + error.message;
+                resultDiv.classList.add('error');
+                resultDiv.classList.remove('hidden');
+                return false;
+            }
+        }
+
+        async function register() {
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const first_name = document.getElementById('register-first-name').value;
+            const last_name = document.getElementById('register-last-name').value;
+            const phone = document.getElementById('register-phone').value;
+            const photo = document.getElementById('register-photo').files[0];
+            const resultDiv = document.getElementById('register-result');
+
+            if (!username || !email || !password || !first_name || !last_name) {
+                resultDiv.textContent = 'Заполните все обязательные поля';
+                resultDiv.classList.add('error');
+                resultDiv.classList.remove('hidden');
+                return;
+            }
+
+            const data = {
+                username: username,
+                email: email,
+                password: password,
+                first_name: first_name,
+                last_name: last_name,
+                phone: phone || null
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/register/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    resultDiv.textContent = JSON.stringify(result, null, 2);
+                    resultDiv.classList.add('error');
+                    resultDiv.classList.remove('hidden');
+                    return;
+                }
+
+                resultDiv.textContent = 'Регистрация успешна! Пожалуйста, войдите.';
+                resultDiv.classList.remove('error');
+                resultDiv.classList.remove('hidden');
+                showSection('login');
+
+                // Если есть фото, автоматически входим и загружаем фото
+                if (photo) {
+                    const loginResponse = await fetch(`${API_BASE_URL}/users/token`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password })
+                    });
+                    const loginData = await loginResponse.json();
+                    if (loginResponse.ok && loginData.access) {
+                        token = loginData.access;
+                        localStorage.setItem('token', token);
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        userId = payload.user_id;
+                        localStorage.setItem('userId', userId);
+                        updateAuthUI();
+                        await uploadPhoto(photo, resultDiv);
+                        getProfile();
+                    }
+                }
+            } catch (error) {
+                resultDiv.textContent = 'Ошибка: ' + error.message;
+                resultDiv.classList.add('error');
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        async function login() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const resultDiv = document.getElementById('login-result');
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/token`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+                resultDiv.textContent = response.ok ? 'Вход успешен!' : JSON.stringify(data, null, 2);
+                resultDiv.classList.toggle('error', !response.ok);
+                resultDiv.classList.remove('hidden');
+                if (response.ok && data.access) {
+                    token = data.access;
+                    localStorage.setItem('token', token);
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    userId = payload.user_id;
+                    localStorage.setItem('userId', userId);
+                    updateAuthUI();
+                    showSection('profile');
+                    getProfile();
+                    getMyBooks();
+                    getExchangeRequests();
+                }
+            } catch (error) {
+                resultDiv.textContent = 'Ошибка: ' + error.message;
+                resultDiv.classList.add('error');
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        async function logout() {
+            token = null;
+            userId = null;
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            updateAuthUI();
+            showSection('home');
+        }
+
+        async function getProfile() {
+            const resultDiv = document.getElementById('profile-info');
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                resultDiv.innerHTML = response.ok ? `
+                    <p><strong>Имя пользователя:</strong> ${data.username}</p>
+                    <p><strong>Email:</strong> ${data.email}</p>
+                    <p><strong>Имя:</strong> ${data.first_name}</p>
+                    <p><strong>Фамилия:</strong> ${data.last_name}</p>
+                    <p><strong>Телефон:</strong> ${data.phone || 'Не указан'}</p>
+                    ${data.photo ? `<img src="${data.photo}" alt="Фото профиля" style="max-width: 100px;">` : ''}
+                ` : JSON.stringify(data, null, 2);
+                resultDiv.classList.toggle('error', !response.ok);
+                resultDiv.classList.remove('hidden');
+            } catch (error) {
+                resultDiv.textContent = 'Ошибка: ' + error.message;
+                resultDiv.classList.add('error');
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        async function updateProfile() {
+            const username = document.getElementById('update-username').value;
+            const email = document.getElementById('update-email').value;
+            const first_name = document.getElementById('update-first-name').value;
+            const last_name = document.getElementById('update-last-name').value;
+            const phone = document.getElementById('update-phone').value;
+            const photo = document.getElementById('update-photo').files[0];
+            const resultDiv = document.getElementById('update-result');
+
+            const data = {};
+            if (username) data.username = username;
+            if (email) data.email = email;
+            if (first_name) data.first_name = first_name;
+            if (last_name) data.last_name = last_name;
+            if (phone) data.phone = phone;
+
+            try {
+                if (Object.keys(data).length > 0) {
+                    const response = await fetch(`${API_BASE_URL}/users/update`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await response.json();
+                    if (!response.ok) {
+                        resultDiv.textContent = JSON.stringify(result, null, 2);
+                        resultDiv.classList.add('error');
+                        resultDiv.classList.remove('hidden');
+                        return;
+                    }
+                    resultDiv.textContent = 'Профиль обновлен!';
+                    resultDiv.classList.remove('error');
+                    resultDiv.classList.remove('hidden');
+                }
+
+                if (photo) {
+                    await uploadPhoto(photo, resultDiv);
+                    resultDiv.textContent = 'Фото профиля обновлено!';
+                    resultDiv.classList.remove('error');
+                    resultDiv.classList.remove('hidden');
+                }
+
+                getProfile();
+            } catch (error) {
+                resultDiv.textContent = 'Ошибка: ' + error.message;
+                resultDiv.classList.add('error');
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        async function searchBooks() {
+            const query = document.getElementById('search-query').value;
+            const genres = document.getElementById('search-genres').value;
+            const author = document.getElementById('search-author').value;
+            const resultDiv = document.getElementById('books-result');
+            let url = `${API_BASE_URL}/books/search/?`;
+            if (query) url += `query=${encodeURIComponent(query)}&`;
+            if (genres) url += `genres=${encodeURIComponent(genres)}&`;
+            if (author) url += `author=${encodeURIComponent(author)}`;
+
+            try {
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                resultDiv.innerHTML = response.ok ? await Promise.all(data.results.map(async book => {
+                    const photos = await getBookPhotos(book.user_book_id);
+                    return `
+                        <div class="book-card">
+                            <h3>${book.book.name}</h3>
+                            <p><strong>Автор:</strong> ${book.book.author}</p>
+                            <p><strong>Жанры:</strong> ${book.book.genres.join(', ')}</p>
+                            <p><strong>Описание:</strong> ${book.book.overview}</p>
+                            <p><strong>Состояние:</strong> ${book.condition}</p>
+                            <p><strong>Местоположение:</strong> ${book.location}</p>
+                            <p><strong>Статус:</strong> ${book.status}</p>
+                            ${photos.length ? photos.map(p => `<img src="${p.file_path}" alt="Фото книги">`).join('') : ''}
+                            <button onclick="createExchangeRequest(${book.user_book_id})">Запросить обмен</button>
+                        </div>
+                    `;
+                })).then(cards => cards.join('')) : JSON.stringify(data, null, 2);
+                resultDiv.classList.toggle('error', !response.ok);
+                resultDiv.classList.remove('hidden');
+            } catch (error) {
+                resultDiv.textContent = 'Ошибка: ' + error.message;
+                resultDiv.classList.add('error');
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        async function getBookPhotos(user_book_id) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/books/photos/?user_book_id=${user_book_id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                return response.ok ? (await response.json()) : [];
+            } catch {
+                return [];
+            }
+        }
+
+        async function addBook() {
+            const name = document.getElementById('add-book-title').value;
+            const author = document.getElementById('add-book-author').value;
+            const overview = document.getElementById('add-book-overview').value;
+            const genres = document.getElementById('add-book-genres').value;
+            const condition = document.getElementById('add-book-condition').value;
+            const location = document.getElementById('add-book-location').value;
+            const file = document.getElementById('add-book-photo').files[0];
+            const resultDiv = document.getElementById('books-result');
+
+            if (!name || !author || !overview || !condition || !location) {
+                resultDiv.textContent = 'Заполните все обязательные поля';
+                resultDiv.classList.add('error');
+                resultDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (!/^-?\d+\.\d+,-?\d+\.\d+$/.test(location)) {
+                resultDiv.textContent = 'Местоположение должно быть в формате lat,lon (например, 55.7558,37.6173)';
+                resultDiv.classList.add('error');
+                resultDiv.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const bookResponse = await fetch(`${API_BASE_URL}/books/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, author, overview, genres, condition, location })
+                });
+                const bookData = await bookResponse.json();
+                if (!bookResponse.ok) {
+                    throw new Error(bookData.detail || 'Не удалось добавить книгу');
+                }
+                if (file) {
+                    const formData = new FormData();
+                    formData.append('id', bookData.book_id);
+                    formData.append('file', file);
+                    const photoResponse = await fetch(`${API_BASE_URL}/books/photos/`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    });
+                    const photoData = await photoResponse.json();
+                    if (!photoResponse.ok) {
+                        throw new Error(photoData.detail || 'Не удалось загрузить фото');
+                    }
+                }
+                resultDiv.textContent = 'Книга добавлена!';
+                resultDiv.classList.remove('error');
+                resultDiv.classList.remove('hidden');
+                getMyBooks();
+            } catch (error) {
+                resultDiv.textContent = 'Ошибка: ' + error.message;
+                resultDiv.classList.add('error');
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        async function getMyBooks() {
+            const resultDiv = document.getElementById('my-books');
+            try {
+                const response = await fetch(`${API_BASE_URL}/books/list/`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                resultDiv.innerHTML = response.ok ? await Promise.all(data.results.map(async book => {
+                    const photos = await getBookPhotos(book.user_book_id);
+                    return `
+                        <div class="book-card">
+                            <h3>${book.book.name}</h3>
+                            <p><strong>Автор:</strong> ${book.book.author}</p>
+                            <p><strong>Жанры:</strong> ${book.book.genres.join(', ')}</p>
+                            <p><strong>Описание:</strong> ${book.book.overview}</p>
+                            <p><strong>Состояние:</strong> ${book.condition}</p>
+                            <p><strong>Местоположение:</strong> ${book.location}</p>
+                            <p><strong>Статус:</strong> ${book.status}</p>
+                            ${photos.length ? photos.map(p => `<img src="${p.file_path}" alt="Фото книги">`).join('') : ''}
+                        </div>
+                    `;
+                })).then(cards => cards.join('')) : JSON.stringify(data, null, 2);
+                resultDiv.classList.toggle('error', !response.ok);
+                resultDiv.classList.remove('hidden');
+            } catch (error) {
+                resultDiv.textContent = 'Ошибка: ' + error.message;
+                resultDiv.classList.add('error');
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        async function createExchangeRequest(user_book_id = null) {
+            const id = user_book_id || document.getElementById('exchange-book-id').value;
+            const resultDiv = document.getElementById('exchange-result');
+            if (!id) {
+                resultDiv.textContent = 'Введите ID книги';
+                resultDiv.classList.add('error');
+                resultDiv.classList.remove('hidden');
+                return;
+            }
+            try {
+                const response = await fetch(`${API_BASE_URL}/exchange-requests/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user_book_id: id })
+                });
+                const data = await response.json();
+                resultDiv.textContent = response.ok ? 'Запрос на обмен создан!' : JSON.stringify(data, null, 2);
+                resultDiv.classList.toggle('error', !response.ok);
+                resultDiv.classList.remove('hidden');
+                if (response.ok) {
+                    getExchangeRequests();
+                }
+            } catch (error) {
+                resultDiv.textContent = 'Ошибка: ' + error.message;
+                resultDiv.classList.add('error');
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        async function getExchangeRequests() {
+            const resultDiv = document.getElementById('exchange-list');
+            try {
+                const response = await fetch(`${API_BASE_URL}/exchange-requests/list/`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                resultDiv.innerHTML = response.ok ? data.map(req => `
+                    <div class="exchange-request">
+                        <p><strong>Книга:</strong> ${req.book.book.name} (ID: ${req.book.user_book_id})</p>
+                        <p><strong>Запросил:</strong> ${req.requester}</p>
+                        <p><strong>Владелец:</strong> ${req.owner}</p>
+                        <p><strong>Статус:</strong> ${req.status}</p>
+                        <p><strong>Создан:</strong> ${new Date(req.created_at).toLocaleString()}</p>
+                    </div>
+                `).join('') : JSON.stringify(data, null, 2);
+                resultDiv.classList.toggle('error', !response.ok);
+                resultDiv.classList.remove('hidden');
+            } catch (error) {
+                resultDiv.textContent = 'Ошибка: ' + error.message;
+                resultDiv.classList.add('error');
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        async function getRecommendations() {
+            const resultDiv = document.getElementById('recommendations-result');
+            try {
+                const response = await fetch(`${API_BASE_URL}/recommendations/?user_id=${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                resultDiv.innerHTML = response.ok ? data.recommendations.map(rec => `
+                    <div class="book-card">
+                        <h3>${rec.name}</h3>
+                        <p><strong>Автор:</strong> ${rec.author}</p>
+                        <p><strong>Жанры:</strong> ${rec.genres.join(', ')}</p>
+                        <p><strong>Причина:</strong> ${rec.reason}</p>
+                        <p><strong>Сходство:</strong> ${rec.similarity.toFixed(2)}</p>
+                    </div>
+                `).join('') : JSON.stringify(data, null, 2);
+                resultDiv.classList.toggle('error', !response.ok);
+                resultDiv.classList.remove('hidden');
+            } catch (error) {
+                resultDiv.textContent = 'Ошибка: ' + error.message;
+                resultDiv.classList.add('error');
+                resultDiv.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
