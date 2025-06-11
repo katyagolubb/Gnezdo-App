@@ -47,7 +47,17 @@
 2.	[Book Recommendation Service (FastAPI + Celery)](https://github.com/katyagolubb/Gnezdo-App/blob/main/recommendation-service/README.md) – рекомендации книг.
 3.	[User Service (Django)](https://github.com/katyagolubb/Gnezdo-App/blob/main/user-management-api/README.md) – управление пользователями.
 4.  Api Gateway 
-
+### Тестирование
+В ходе работы были организованы тесты для каждого сервиса и модуля. 
+1.  API Gateway (api_gateway/)
+Тесты на: правильность маршрутизации, корректность передачи параметров и заголовков, обработка запросов, работа механизмов балансировки нагрузки, обработка ошибок
+2.  Book Microservice (book-api/)
+Тесты на: RUD операции для книг, загрузку и получение фотографий, создание и получение запросов на обмен, аутентификацию и права доступа
+3.  Recommendation Service (recommendation-service/)
+Тесты на: API endpoints (/api/precompute/ и /api/recommendations/), celery задачу compute_recommendations_task
+4.  User Management API (user-management-api/)
+Тесты на: создание, валидацию модели пользователя, сериализаторы (регистрация, обновление, сброс пароля)
+ + API endpoints: регистрация и аутентификация, обновление профиля, получение данных пользователя, удаление аккаунта, сброс пароля, получение данных других пользователей
 ## Setup
 1. Clone the Repository
 ```bash
