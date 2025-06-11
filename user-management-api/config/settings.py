@@ -105,8 +105,10 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'user-management-api', '*']
+
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Для фронтенда, если используете
+    "http://localhost:8080",  # Для фронтенда, если используете
 ]
 
 ALLOWED_HOSTS = ["*"]

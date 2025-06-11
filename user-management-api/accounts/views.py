@@ -14,6 +14,21 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        print("Received request to /api/register/")
+        print("Request headers:", request.headers)
+        print("Request data:", request.data)
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            print("User created successfully:", serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            print("Error during serialization:", str(e))
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 class UserUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -97,3 +112,4 @@ class OtherUserDetailView(generics.RetrieveAPIView):
         # Получаем пользователя по ID из URL
         user_id = self.kwargs.get('pk')
         return self.get_queryset().get(id=user_id)
+

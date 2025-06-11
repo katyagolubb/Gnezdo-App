@@ -11,4 +11,4 @@ COPY . .
 RUN python manage.py collectstatic --noinput
 
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5001", "config.wsgi:application"]
+CMD ["python", "manage.py", "runserver" , "0.0.0.0:5001"]
