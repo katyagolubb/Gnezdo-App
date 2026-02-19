@@ -199,6 +199,21 @@ class UserBookDetailView(APIView):
         user_book = self.get_object(user_book_id, request.user)
         if not user_book:
             return Response({"error": "Book not found or access denied"}, status=status.HTTP_404_NOT_FOUND)
+
+        # F_Exchange_6: Проверка активных запросов перед удалением
+        active_requests = ExchangeRequest.objects.filter(book=user_book, status='pending')
+        if active_requests.exists() and request.query_params.get('confirm') != 'true':
+            serializer = ExchangeRequestSerializer(active_requests, many=True)
+            return Response(
+                {
+                    "error": "Active exchange requests exist. Confirm deletion with ?confirm=true",
+                    "active_requests": serializer.data,
+                },
+                status=status.HTTP_409_CONFLICT
+            )
+
+        # F_Exchange_7: При удалении книги статус запросов -> cancelled
+        ExchangeRequest.objects.filter(book=user_book).update(status='cancelled')
         user_book.delete()
         return Response({"message": "Book deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
@@ -209,6 +224,16 @@ class BookSearchView(generics.ListAPIView):
     @method_decorator(cache_page(60 * 15))  # Кэш на 15 минут
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        # F_Search_1: Длина строки поиска до 50 символов
+        query = request.query_params.get('query', '')
+        if query and len(query) > 50:
+            return Response(
+                {"error": "Search query must be at most 50 characters"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
         query = self.request.query_params.get('query', '')
@@ -360,13 +385,20 @@ class ExchangeRequestView(APIView):
         except UserBook.DoesNotExist:
             return Response({"error": "Book not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Проверка статуса книги
-        if user_book.status != 'available':
-            return Response({"error": "Book is not available for exchange"}, status=status.HTTP_400_BAD_REQUEST)
-
         # Нельзя запросить свою же книгу
         if user_book.user == request.user:
             return Response({"error": "You cannot request your own book"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # F_Exchange_5: Нельзя создать повторный pending для той же книги
+        if ExchangeRequest.objects.filter(book=user_book, status='pending').exists():
+            return Response(
+                {"error": "An active exchange request already exists for this book"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Проверка статуса книги
+        if user_book.status != 'available':
+            return Response({"error": "Book is not available for exchange"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Создание запроса
         exchange_request = ExchangeRequest.objects.create(

@@ -4,10 +4,10 @@ from decouple import config
 from datetime import timedelta
 import cloudinary
 
-# Загружаем переменные Cloudinary с помощью config
-CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME')
-CLOUDINARY_API_KEY = config('CLOUDINARY_API_KEY')
-CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET')
+# Загружаем переменные Cloudinary с помощью config (с дефолтами для локальной разработки/CI)
+CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='demo')
+CLOUDINARY_API_KEY = config('CLOUDINARY_API_KEY', default='demo')
+CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET', default='demo')
 
 # Настраиваем Cloudinary
 cloudinary.config(
@@ -22,7 +22,9 @@ MEDIA_URL = '/media/'
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config('SECRET_KEY')
+# Безопасный секрет в проде берётся из переменной окружения,
+# а для локального запуска в Docker/CI есть дефолтное значение.
+SECRET_KEY = config('SECRET_KEY', default='dev-secret-key-change-me')
 DEBUG = True
 ALLOWED_HOSTS = []
 
@@ -72,16 +74,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT'),
+# Если переменные БД не заданы, используем SQLite для локального запуска в Docker/CI.
+DB_NAME = config('DB_NAME', default=None)
+if DB_NAME:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': DB_NAME,
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default='postgres'),
+            'HOST': config('DB_HOST', default='postgres'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},

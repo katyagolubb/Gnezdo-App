@@ -6,25 +6,27 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Cloudinary конфигурация
-CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME')
-CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY')
-CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET')
-
-# Настройка Cloudinary
+# Cloudinary конфигурация (с дефолтами для локальной разработки/CI)
 import cloudinary
+
+CLOUDINARY_CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', 'demo')
+CLOUDINARY_API_KEY = os.getenv('CLOUDINARY_API_KEY', 'demo')
+CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', 'demo')
+
 cloudinary.config(
     cloud_name=CLOUDINARY_CLOUD_NAME,
     api_key=CLOUDINARY_API_KEY,
     api_secret=CLOUDINARY_API_SECRET,
-    secure=True  # Использовать HTTPS
+    secure=True,  # Использовать HTTPS
 )
 
-GOOGLE_API_KEY = config('GOOGLE_API_KEY')
+GOOGLE_API_KEY = config('GOOGLE_API_KEY', default='')
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config('SECRET_KEY')
+# Безопасный секрет в проде берётся из переменной окружения,
+# а для локального запуска в Docker/CI есть дефолтное значение.
+SECRET_KEY = config('SECRET_KEY', default='dev-secret-key-change-me')
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 
@@ -70,16 +72,26 @@ TEMPLATES = [
     },
 ]
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT'),
+# Если переменные БД не заданы, используем SQLite для локального запуска в Docker/CI.
+DB_NAME = config('DB_NAME', default=None)
+if DB_NAME:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': DB_NAME,
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default='postgres'),
+            'HOST': config('DB_HOST', default='postgres'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -137,3 +149,12 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# При запуске тестов используем локальный кэш (Redis не нужен)
+import sys
+if 'test' in sys.argv:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        }
+    }

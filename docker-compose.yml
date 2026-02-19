@@ -55,7 +55,7 @@ services:
       context: ./book-api
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - "5004:5000"
     networks:
       - app_network
 #    healthcheck:

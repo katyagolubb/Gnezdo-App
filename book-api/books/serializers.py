@@ -154,3 +154,9 @@ class ExchangeRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExchangeRequest
         fields = ['exchange_request_id', 'book', 'requester', 'owner', 'status', 'created_at']
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        if instance.book_id is None:
+            ret['book'] = None
+        return ret

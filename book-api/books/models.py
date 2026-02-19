@@ -64,10 +64,11 @@ class ExchangeRequest(models.Model):
         ('accepted', 'Accepted'),  # Запрос принят
         ('rejected', 'Rejected'),  # Запрос отклонён
         ('completed', 'Completed'),  # Обмен завершён
+        ('cancelled', 'Cancelled'),  # Отменён (напр. при удалении книги)
     )
 
     exchange_request_id = models.AutoField(primary_key=True)
-    book = models.ForeignKey(UserBook, on_delete=models.CASCADE, related_name='exchange_requests')
+    book = models.ForeignKey(UserBook, on_delete=models.SET_NULL, null=True, blank=True, related_name='exchange_requests')
     requester = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requested_books')
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_books')
     status = models.CharField(max_length=20, choices=REQUEST_STATUS_CHOICES, default='pending')
