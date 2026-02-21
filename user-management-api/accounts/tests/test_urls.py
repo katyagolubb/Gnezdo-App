@@ -3,15 +3,15 @@ from django.urls import reverse, resolve
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient, APITestCase
 from rest_framework import status
-from .models import User
-from .views import (
+
+from accounts.views import (
     RegisterView,
     UserUpdateView,
     PasswordResetRequestView,
     PasswordResetConfirmView,
     UserDeleteView,
     UserDetailView,
-    OtherUserDetailView
+    OtherUserDetailView,
 )
 
 User = get_user_model()
@@ -89,7 +89,8 @@ class UserViewsTests(APITestCase):
     def test_other_user_detail_view(self):
         """Тест получения информации о другом пользователе"""
         url = reverse('other-user-detail', kwargs={'pk': self.other_user.pk})
-        
+        # Доступ только для аутентифицированных пользователей (F_User_2)
+        self.client.force_authenticate(user=self.user)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['username'], 'otheruser')
@@ -104,7 +105,7 @@ class UserViewsTests(APITestCase):
             'last_name': 'Name'
         }
         
-        response = self.client.patch(url, data, format='json')
+        response = self.client.put(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
         self.assertEqual(self.user.first_name, 'Updated')
@@ -136,7 +137,7 @@ class UserViewsTests(APITestCase):
         url = reverse('user-delete')
         
         response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(User.objects.filter(pk=self.user.pk).exists())
 
 

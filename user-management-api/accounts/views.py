@@ -1,46 +1,51 @@
-from rest_framework import generics,status
+from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import User
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from accounts.serializers import UserSerializer, UserUpdateSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer
+from accounts.serializers import (
+    UserSerializer,
+    UserUpdateSerializer,
+    PasswordResetRequestSerializer,
+    PasswordResetConfirmSerializer,
+    PublicUserSerializer,
+)
 from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.utils.encoding import force_bytes
+from django.http import Http404
 
 class RegisterView(generics.CreateAPIView):
+    """Регистрация нового пользователя (F_Auth_1). Доступно без аутентификации."""
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
-    def post(self, request, *args, **kwargs):
-        print("Received request to /api/register/")
-        print("Request headers:", request.headers)
-        print("Request data:", request.data)
-        serializer = self.get_serializer(data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-            self.perform_create(serializer)
-            print("User created successfully:", serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            print("Error during serialization:", str(e))
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 class UserUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request):
+    def _update(self, request, partial: bool):
         user = request.user
-        serializer = UserUpdateSerializer(user, data=request.data, partial=True)
+        serializer = UserUpdateSerializer(user, data=request.data, partial=partial)
         if serializer.is_valid():
             serializer.save()
             return Response({"message": "Данные пользователя обновлены", "data": serializer.data}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-# Вьюха для запроса сброса пароля
+
+    def put(self, request):
+        # Полное обновление (но допускаем partial для удобства)
+        return self._update(request, partial=False)
+
+    def patch(self, request):
+        # Частичное обновление профиля
+        return self._update(request, partial=True)
+
+# Вьюха для запроса сброса пароля (F_Auth_4) — доступна без аутентификации
 class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
         if serializer.is_valid():
@@ -63,8 +68,11 @@ class PasswordResetRequestView(APIView):
             return Response({"message": "Письмо для сброса пароля отправлено"}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# Вьюха для подтверждения сброса пароля
+
+# Вьюха для подтверждения сброса пароля (F_Auth_4) — доступна без аутентификации
 class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         serializer = PasswordResetConfirmSerializer(data=request.data)
         if serializer.is_valid():
@@ -102,14 +110,19 @@ class UserDetailView(generics.RetrieveAPIView):
     def get_object(self):
         return self.request.user
 
-# Новая вьюха для получения данных другого пользователя по ID
+
+# Вьюха для получения публичных данных другого пользователя по ID (F_User_2)
 class OtherUserDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = UserSerializer
+    serializer_class = PublicUserSerializer
     queryset = User.objects.all()  # Указываем queryset для поиска пользователей
 
     def get_object(self):
         # Получаем пользователя по ID из URL
         user_id = self.kwargs.get('pk')
-        return self.get_queryset().get(id=user_id)
+        obj = self.get_queryset().filter(id=user_id).first()
+        if obj is None:
+            # Возвращаем корректный 404, а не необработанное исключение
+            raise Http404("User not found")
+        return obj
 

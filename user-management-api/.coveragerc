@@ -1,0 +1,19 @@
+[run]
+source = .
+omit =
+    */migrations/*
+    */tests/*
+    */test_*.py
+    manage.py
+    */__pycache__/*
+    */venv/*
+    */.venv/*
+    config/*
+    */wsgi.py
+    */asgi.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError

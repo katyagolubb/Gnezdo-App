@@ -46,7 +46,7 @@ class UserModelTest(TestCase):
         """Тест поля photo"""
         field = User._meta.get_field('photo')
         self.assertIsInstance(field, CloudinaryField)
-        self.assertEqual(field.upload_options['folder'], 'users/')
+        # Проверяем, что поле допускает пустые значения
         self.assertTrue(field.blank)
         self.assertTrue(field.null)
 

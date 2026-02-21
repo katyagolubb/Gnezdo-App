@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.core import mail
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from accounts.views import (
     RegisterView,
     UserUpdateView,
@@ -47,6 +48,26 @@ class RegisterViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(User.objects.count(), 0)
 
+    def test_register_user_weak_password_rejected(self):
+        """F_Auth_1: слабый пароль отклоняется"""
+        weak_data = self.valid_data.copy()
+        weak_data['password'] = 'short'
+        request = self.factory.post(self.url, weak_data, format='json')
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('password', response.data)
+
+    def test_register_user_username_invalid_mask(self):
+        """F_Auth_1: имя пользователя с пробелами отклоняется"""
+        bad_data = self.valid_data.copy()
+        bad_data['username'] = 'bad user'
+        request = self.factory.post(self.url, bad_data, format='json')
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('username', response.data)
+
 
 class UserUpdateViewTest(APITestCase):
     def setUp(self):
@@ -77,7 +98,17 @@ class UserUpdateViewTest(APITestCase):
         request = self.factory.put(self.url, self.valid_data, format='json')
         response = self.view(request)
         
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        # Неаутентифицированный пользователь получает 401 (F_Auth_2)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_update_user_invalid_phone(self):
+        """F_User_3: валидация телефона при обновлении профиля"""
+        request = self.factory.put(self.url, {'phone': '+1234567890'}, format='json')
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('phone', response.data)
 
 
 class PasswordResetTest(APITestCase):
@@ -138,6 +169,19 @@ class PasswordResetTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('error', response.data)
 
+    def test_password_reset_confirm_weak_password(self):
+        """F_Auth_4: новый пароль также проходит проверку сложности"""
+        data = {
+            'uidb64': self.uidb64,
+            'token': self.token,
+            'new_password': 'short',
+        }
+        request = self.factory.post(self.reset_confirm_url, data, format='json')
+        response = self.confirm_view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('new_password', response.data)
+
 
 class UserDeleteViewTest(APITestCase):
     def setUp(self):
@@ -167,7 +211,8 @@ class UserDeleteViewTest(APITestCase):
         request = self.factory.delete(self.url)
         response = self.view(request)
         
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        # Неаутентифицированный пользователь получает 401 (F_Auth_2)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class UserDetailViewTest(APITestCase):
@@ -214,7 +259,9 @@ class OtherUserDetailViewTest(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['username'], 'otheruser')
-        self.assertEqual(response.data['email'], 'other@example.com')
+        # F_User_2: email другого пользователя не возвращается
+        self.assertNotIn('email', response.data)
+
 
     def test_get_nonexistent_user(self):
         url = '/api/users/999/'
