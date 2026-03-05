@@ -6,15 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="c307f88a-7388-43ae-a9c1-5216b3302a92" name="Changes" comment="update readme">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/user-management-api/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/user-management-api/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/user-management-api/img.png" beforeDir="false" afterPath="$PROJECT_DIR$/img.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/user-management-api/img_1.png" beforeDir="false" afterPath="$PROJECT_DIR$/img_1.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/user-management-api/img_2.png" beforeDir="false" afterPath="$PROJECT_DIR$/img_2.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/user-management-api/img_3.png" beforeDir="false" afterPath="$PROJECT_DIR$/img_3.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/user-management-api/img_4.png" beforeDir="false" afterPath="$PROJECT_DIR$/img_4.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/user-management-api/img_5.png" beforeDir="false" afterPath="$PROJECT_DIR$/img_5.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/user-management-api/img_6.png" beforeDir="false" afterPath="$PROJECT_DIR$/img_6.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api_gateway/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/api_gateway/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/recommendation-service/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/recommendation-service/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/user-management-api/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/user-management-api/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,12 +31,12 @@
     &quot;assignee&quot;: &quot;haliki&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/katyagolubb/Gnezdo-App.git&quot;,
-    &quot;accountId&quot;: &quot;b6951b12-9cb2-41a4-a01d-0266e0bcfe07&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/katyagolubb/Gnezdo-App.git",
+    "accountId": "b053d8e9-20fc-4873-8c06-d97f00d47983"
   }
-}</component>
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 0
 }</component>
@@ -51,14 +45,14 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Катарина/PycharmProjects/git/Gnezdo-App&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "tests",
+    "last_opened_file_path": "/Users/aleksejgorohov/PycharmProjects/gnezdo/Gnezdo-App"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\projects\PycharmProjects\Gnezdo-App" />
@@ -72,7 +66,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-dfff61a61320-9cdd278e9d02-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-251.25410.159" />
+        <option value="bundled-python-sdk-1bde30d8e611-7b97d883f26b-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.25557.130" />
       </set>
     </attachedChunks>
   </component>
