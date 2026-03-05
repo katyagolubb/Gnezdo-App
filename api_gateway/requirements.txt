@@ -4,3 +4,4 @@ httpx==0.25.2
 python-multipart==0.0.6
 pytest==8.3.3
 requests==2.32.3
+respx==0.21.1

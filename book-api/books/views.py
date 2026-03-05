@@ -221,10 +221,6 @@ class BookSearchView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserBookSerializer
 
-    @method_decorator(cache_page(60 * 15))  # Кэш на 15 минут
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
-
     def list(self, request, *args, **kwargs):
         # F_Search_1: Длина строки поиска до 50 символов
         query = request.query_params.get('query', '')

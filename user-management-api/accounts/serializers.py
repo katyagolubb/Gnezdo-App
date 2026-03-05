@@ -26,6 +26,12 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'password', 'first_name', 'last_name', 'phone', 'photo']
+        extra_kwargs = {
+            # Уникальность/формат проверяем в validate_* с русскими сообщениями,
+            # поэтому отключаем дефолтные validators ModelSerializer.
+            "username": {"validators": []},
+            "email": {"validators": []},
+        }
 
     def create(self, validated_data):
         user = User.objects.create_user(

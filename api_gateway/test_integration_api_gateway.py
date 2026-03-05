@@ -12,6 +12,11 @@ from typing import Dict, Any, List
 
 import pytest
 import requests
+import respx
+from fastapi.testclient import TestClient
+from httpx import Response as HTTPXResponse
+
+from main import app
 
 
 GATEWAY_URL = "http://localhost:8000"
@@ -373,4 +378,56 @@ def test_get_other_user_public_profile():
     assert resp.status_code == 200, resp.text
     data = resp.json()
     assert data["username"] == user1
+
+
+@pytest.mark.integration
+@respx.mock
+def test_book_suggestions_via_gateway_with_mocked_book_service():
+    """
+    Кейс 11 (с заглушкой внешнего сервиса):
+
+    Пользователь запрашивает подсказки книг через API Gateway, а внутренний
+    вызов в Book API подменяется мок‑сервисом. Так мы изолируемся от
+    настоящего Book API (и тем более от Google Books), но при этом тестируем
+    сам Gateway и его маршрутизацию.
+    """
+    client = TestClient(app)
+
+    query = "PythonTesting"
+
+    # Gateway внутри ходит в Book API по URL:
+    #   http://book-api:5000/api/books/suggestions/
+    # подменяем этот вызов с помощью respx (mock для httpx).
+    upstream = respx.get("http://book-api:5000/api/books/suggestions/").mock(
+        return_value=HTTPXResponse(
+            status_code=200,
+            json=[
+                {
+                    "id": "book-1",
+                    "name": "Testing with Python",
+                    "author": "Alice",
+                    "overview": "Great testing book",
+                    "genres": "Programming",
+                }
+            ],
+        )
+    )
+
+    # 1) "Пользователь" обращается к API Gateway за подсказками.
+    resp = client.get("/api/books/suggestions", params={"query": query})
+    assert resp.status_code == 200, resp.text
+
+    # 2) Gateway внутри делает HTTP‑запрос в Book API,
+    #    но он перехватывается нашей заглушкой (upstream).
+    assert upstream.called
+
+    # 3) Пользователь получает данные, которые вернул mock‑Book API,
+    #    и мы проверяем, что Gateway корректно их пробросил.
+    data = resp.json()
+    assert isinstance(data, list)
+    assert len(data) == 1
+    item = data[0]
+    assert item["id"] == "book-1"
+    assert item["name"] == "Testing with Python"
+    assert item["author"] == "Alice"
 

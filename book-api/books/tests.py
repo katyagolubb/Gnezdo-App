@@ -11,8 +11,10 @@ F6: Удаление книги
 """
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from rest_framework.test import APIClient
 from rest_framework import status
+import responses
 
 from books.models import Book, UserBook, Genre, ExchangeRequest
 from books.serializers import BookCreateSerializer, UserBookCreateSerializer
@@ -454,6 +456,62 @@ class BookSearchAPITest(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         results = resp.json().get('results', [])
         self.assertGreaterEqual(len(results), 1)
+
+
+class BookSuggestionMockAPITest(TestCase):
+    """
+    Интеграционный тест BookSuggestionView с заглушкой внешнего сервиса Google Books.
+    Здесь мы не ходим в реальный интернет, а подменяем HTTP‑ответ через библиотеку responses.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = make_user("google_user")
+        self.client.force_authenticate(user=self.user)
+
+    @responses.activate
+    def test_suggestions_from_mocked_google_books(self):
+        """
+        Mock‑сценарий:
+        - перехватываем запрос к https://www.googleapis.com/books/v1/volumes
+        - возвращаем предсказуемый JSON
+        - проверяем маппинг полей и нормализацию жанров.
+        """
+        query = "PythonTesting"
+        google_url = (
+            f"https://www.googleapis.com/books/v1/volumes?q={query}&key={settings.GOOGLE_API_KEY}"
+        )
+
+        responses.add(
+            responses.GET,
+            google_url,
+            json={
+                "items": [
+                    {
+                        "id": "book-1",
+                        "volumeInfo": {
+                            "title": "Testing with Python",
+                            "authors": ["Alice"],
+                            "description": "Great testing book",
+                            "categories": ["Computers / Programming"],
+                        },
+                    }
+                ]
+            },
+            status=200,
+        )
+
+        resp = self.client.get("/api/books/suggestions/", {"query": query})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.json()
+        self.assertEqual(len(data), 1)
+        item = data[0]
+        self.assertEqual(item["id"], "book-1")
+        self.assertEqual(item["name"], "Testing with Python")
+        self.assertEqual(item["author"], "Alice")
+        self.assertEqual(item["overview"], "Great testing book")
+        # genres нормализуется до последней части после слеша
+        self.assertEqual(item["genres"], "Programming")
 
 
 # --- F_Exchange_1–F_Exchange_9: Обмен книгами ---

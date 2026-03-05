@@ -123,19 +123,20 @@ async def register_user(request: Request):
 
     response = await forward_request("user-management", "/register/", "POST", headers, json_data=json_data)
 
-    # Проверяем, что ответ содержит валидный JSON
-    if response.status_code >= 400:
-        logger.error(f"Error from user-management: status={response.status_code}, content={response.content}")
-        return JSONResponse(content={"detail": response.text or "Error from user-management service"},
-                            status_code=response.status_code)
-
+    # Пробрасываем JSON-ответ сервиса как есть (включая ошибки валидации по полям).
+    # Если вдруг пришёл не-JSON, возвращаем текст как detail.
     try:
         content = response.json()
+        return JSONResponse(content=content, status_code=response.status_code)
     except ValueError:
-        logger.error(f"Invalid JSON response from user-management: {response.content}")
-        return JSONResponse(content={"detail": "Invalid response from user-management service"}, status_code=500)
-
-    return JSONResponse(content=content, status_code=response.status_code)
+        logger.error(
+            "Non-JSON response from user-management: "
+            f"status={response.status_code}, content={response.content}"
+        )
+        return JSONResponse(
+            content={"detail": response.text or "Invalid response from user-management service"},
+            status_code=response.status_code if response.status_code >= 400 else 502,
+        )
 
 
 @app.post("/api/users/token")
