@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        allure 'allure'
+    }
+
     stages {
 
         stage('Start Docker services') {
