@@ -19,7 +19,7 @@ from httpx import Response as HTTPXResponse
 from main import app
 
 
-GATEWAY_URL = "http://localhost:8000"
+GATEWAY_URL = "http://api_gateway:8000"
 
 
 def _unique(name: str) -> str:
