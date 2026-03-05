@@ -17,9 +17,13 @@ pipeline {
             steps {
                 sh '''
                     cd api_gateway
+
                     python3 -m venv .venv
                     . .venv/bin/activate
+
+                    pip install --upgrade pip
                     pip install -r requirements.txt
+                    pip install allure-pytest
                 '''
             }
         }
@@ -43,7 +47,7 @@ pipeline {
     post {
         always {
 
-            junit 'api_gateway/report.xml'
+            junit allowEmptyResults: true, testResults: 'api_gateway/report.xml'
 
             allure([
                 includeProperties: false,
