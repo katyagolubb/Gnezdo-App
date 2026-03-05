@@ -9,6 +9,7 @@
 
 import uuid
 from typing import Dict, Any, List
+import os
 
 import pytest
 import requests
@@ -19,7 +20,7 @@ from httpx import Response as HTTPXResponse
 from main import app
 
 
-GATEWAY_URL = "http://api_gateway:8000"
+GATEWAY_URL = os.getenv("GATEWAY_URL", "http://localhost:8000")
 
 
 def _unique(name: str) -> str:
