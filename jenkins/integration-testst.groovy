@@ -35,6 +35,7 @@ pipeline {
                     cd api_gateway
                     . .venv/bin/activate
 
+                    export GATEWAY_URL=http://host.docker.internal:8000
                     pytest -q test_integration_api_gateway.py -m integration
                 '''
             }
