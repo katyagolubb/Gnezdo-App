@@ -20,19 +20,10 @@ pipeline {
 
         stage('Setup Node.js') {
             steps {
-                // Кешируем node_modules — npm install не будет
-                // скачивать пакеты заново если package.json не изменился
-                cache(maxCacheSize: 500, caches: [
-                    arbitraryFileCache(
-                        path: 'frontend/node_modules',
-                        cacheValidityDecidingFile: 'frontend/package.json'
-                    )
-                ]) {
-                    sh '''
-                        cd frontend
-                        npm install
-                    '''
-                }
+                sh '''
+                    cd frontend
+                    npm ci
+                '''
             }
         }
 
