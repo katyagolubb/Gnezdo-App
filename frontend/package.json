@@ -1,0 +1,25 @@
+{
+  "name": "book-exchange-e2e",
+  "version": "1.0.0",
+  "description": "System / E2E тесты для приложения «Книжный обмен»",
+  "scripts": {
+    "test": "jest --runInBand --forceExit",
+    "test:headed": "PUPPETEER_HEADLESS=false jest --runInBand --forceExit"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-junit": "^16.0.0",
+    "puppeteer": "^24.0.0"
+  },
+  "jest": {
+    "testTimeout": 30000,
+    "testEnvironment": "node",
+    "reporters": [
+      "default",
+      ["jest-junit", {
+        "outputDirectory": ".",
+        "outputName": "junit.xml"
+      }]
+    ]
+  }
+}
