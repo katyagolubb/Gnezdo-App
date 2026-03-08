@@ -2,8 +2,13 @@ pipeline {
     agent any
 
     triggers {
-        // Запуск по расписанию — каждый день в 03:00
         cron('0 3 * * *')
+    }
+
+    environment {
+        // Говорим Puppeteer использовать системный Chromium из Dockerfile
+        PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = 'true'
+        PUPPETEER_EXECUTABLE_PATH        = '/usr/bin/chromium'
     }
 
     stages {
@@ -40,14 +45,11 @@ pipeline {
     post {
         always {
             junit allowEmptyResults: true, testResults: 'frontend/junit.xml'
-
             sh 'docker compose down -v || true'
         }
-
         success {
             echo 'E2E тесты прошли успешно!'
         }
-
         failure {
             echo 'E2E тесты упали. Проверьте отчёт.'
         }
