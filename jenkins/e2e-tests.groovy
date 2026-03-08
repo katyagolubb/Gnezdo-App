@@ -20,12 +20,19 @@ pipeline {
 
         stage('Setup Node.js') {
             steps {
-                sh '''
-                    cd frontend
-                    node --version
-                    npm --version
-                    npm install
-                '''
+                // Кешируем node_modules — npm install не будет
+                // скачивать пакеты заново если package.json не изменился
+                cache(maxCacheSize: 500, caches: [
+                    arbitraryFileCache(
+                        path: 'frontend/node_modules',
+                        cacheValidityDecidingFile: 'frontend/package.json'
+                    )
+                ]) {
+                    sh '''
+                        cd frontend
+                        npm install
+                    '''
+                }
             }
         }
 
@@ -33,7 +40,7 @@ pipeline {
             steps {
                 sh '''
                     cd frontend
-                    npm test -- --reporters=default --reporters=jest-junit
+                    npm test
                 '''
             }
         }

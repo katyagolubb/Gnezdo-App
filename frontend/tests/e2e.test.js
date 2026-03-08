@@ -224,7 +224,13 @@ describe('Книжный обмен — System / E2E тесты', () => {
     await startServer();
     browser = await puppeteer.launch({
       headless: process.env.PUPPETEER_HEADLESS !== 'false' ? 'shell' : false,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',   // /dev/shm слишком мал в Docker
+        '--disable-gpu',
+        '--single-process',
+      ],
     });
   });
 
